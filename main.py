@@ -1,6 +1,5 @@
 import sys
 
-from IPython.external.qt_for_kernel import QtGui
 from PyQt5 import QtGui
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow
