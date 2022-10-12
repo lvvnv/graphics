@@ -3,10 +3,10 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QAction
 
 from pgm import create_pgm
-# Рисовалка
 from ppm import create_ppm
 
 
+# Рисовалка
 class Painter(QtWidgets.QMainWindow):
 
     def __init__(self, parent=None):
@@ -17,6 +17,17 @@ class Painter(QtWidgets.QMainWindow):
         self.setCentralWidget(self.label)
         self.last_x, self.last_y = None, None
         self._createMenuBar()
+        self.color = QtGui.QColor('yellow')
+
+    def mousePressEvent(self, e):
+        switcher = {
+            1: 'yellow',
+            2: 'green',
+            4: 'red',
+            8: 'white',
+            16: 'blue'
+        }
+        self.color = QtGui.QColor(switcher.get(e.button()))
 
     def mouseMoveEvent(self, e):
         if self.last_x is None:
@@ -26,7 +37,7 @@ class Painter(QtWidgets.QMainWindow):
 
         painter = QtGui.QPainter(self.label.pixmap())
         p = painter.pen()
-        p.setColor(QtGui.QColor('yellow'))
+        p.setColor(self.color)
         painter.setPen(p)
         painter.drawLine(self.last_x, self.last_y, e.x(), e.y())
         painter.end()
