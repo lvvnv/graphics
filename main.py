@@ -1,72 +1,71 @@
 import sys
 
-from PyQt5 import QtGui
-from PyQt5.QtGui import QPixmap, QColor
-from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QAction
 
 import pgm
 import ppm
+from image import Image
+from painter import Painter
 
 
-class App(QMainWindow):
+class Window(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.title = 'Test image'
-        self.left = 0
-        self.top = 0
-        self.width = 640
-        self.height = 426
-        self.label = QLabel()
-        self.initUI()
+        self.setWindowTitle("Menu")
+        self.resize(400, 200)
+        self.centralWidget = QLabel()
+        self.centralWidget.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        self.setCentralWidget(self.centralWidget)
+        self._createMenuBar()
 
-    def initUI(self):
-        self.setWindowTitle(self.title)
-        self.setGeometry(self.left, self.top, self.width, self.height)
-        canvas = QPixmap(self.width, self.height)
-        self.label.setPixmap(canvas)
-        self.setCentralWidget(self.label)
+    def open_pgm(self):
+        pgm_ex = Image(self)
+        pgm_ex.draw_pgm_sample()
 
-    def draw_pgm_sample(self):
-        painter = QtGui.QPainter(self.label.pixmap())
-        pen = QtGui.QPen()
+    def open_pgm_painted(self):
+        pgm_ex = Image(self)
+        pgm_ex.draw_pgm_sample(pgm.image_paint_path)
 
-        raster_map = pgm.crete_raster_sample_map()
-        for y in range(len(raster_map)):
-            row = raster_map[y]
-            for x in range(len(row)):
-                bit = row[x]
-                pen.setColor(QColor(bit, bit, bit))
-                painter.setPen(pen)
-                painter.drawPoint(x, y)
+    def open_ppm(self):
+        pgm_ex = Image(self)
+        pgm_ex.draw_ppm_sample()
 
-        painter.end()
-        self.show()
+    def open_ppm_painted(self):
+        ppm_ex = Image(self)
+        ppm_ex.draw_ppm_sample(ppm.image_paint_path)
 
-    def draw_ppm_sample(self):
-        painter = QtGui.QPainter(self.label.pixmap())
-        pen = QtGui.QPen()
+    def open_painter(self):
+        painter = Painter(self)
+        painter.show()
 
-        raster_map = ppm.crete_raster_sample_map()
-        for y in range(len(raster_map)):
-            row = raster_map[y]
-            for x in range(len(row)):
-                b, g, r = [row[x][-i] for i in range(3)]
-                pen.setColor(QColor(r, g, b))
-                painter.setPen(pen)
-                painter.drawPoint(x, y)
+    def _createMenuBar(self):
+        menu_bar = self.menuBar()
+        file_menu = menu_bar.addMenu('&Open')
 
-        painter.end()
-        self.show()
+        p5_action = QAction('&P5', self)
+        p5_action.triggered.connect(self.open_pgm)
+        file_menu.addAction(p5_action)
+
+        p6_action = QAction('&P6', self)
+        p6_action.triggered.connect(self.open_ppm)
+        file_menu.addAction(p6_action)
+
+        p5_action_painted = QAction('&P5 - painted', self)
+        p5_action_painted.triggered.connect(self.open_pgm_painted)
+        file_menu.addAction(p5_action_painted)
+
+        p6_action_painted = QAction('&P6 - painted', self)
+        p6_action_painted.triggered.connect(self.open_ppm_painted)
+        file_menu.addAction(p6_action_painted)
+
+        painter = menu_bar.addAction('&Paint')
+        painter.triggered.connect(self.open_painter)
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-
-    pgm_ex = App()
-    pgm_ex.draw_pgm_sample()
-
-    ppm_ex = App()
-    ppm_ex.draw_ppm_sample()
-
+    win = Window()
+    win.show()
     sys.exit(app.exec_())
