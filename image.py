@@ -30,7 +30,7 @@ class Image(QMainWindow):
         painter = QtGui.QPainter(self.label.pixmap())
         pen = QtGui.QPen()
 
-        raster_map = pgm.crete_raster_sample_map(path)
+        raster_map = pgm.create_raster_sample_map(path)
         for y in range(len(raster_map)):
             row = raster_map[y]
             for x in range(len(row)):
@@ -46,7 +46,7 @@ class Image(QMainWindow):
         painter = QtGui.QPainter(self.label.pixmap())
         pen = QtGui.QPen()
 
-        raster_map = ppm.crete_raster_sample_map(path)
+        raster_map = ppm.create_raster_sample_map(path)
         for y in range(len(raster_map)):
             row = raster_map[y]
             for x in range(len(row)):
