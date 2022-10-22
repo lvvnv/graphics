@@ -8,9 +8,7 @@ class Hsv(ColorSpace):
         width = len(pixmap[0])
 
         def values(hsv):
-            H = hsv[0] / 255 * 359
-            S = hsv[1] / 255
-            V = hsv[2] / 255
+            H, S, V = hsv[0] * 359, hsv[1], hsv[2]
             C = V * S
             X = C * (1 - np.abs(np.mod(H / 60, 2) - 1))
             m = V - C
@@ -23,7 +21,7 @@ class Hsv(ColorSpace):
                 5: (C, 0, X)
             }
             r_prime, g_prime, b_prime = rgb_dict[H // 6]
-            rgb = [(r_prime + m) * 255, (g_prime + m) * 255, (b_prime + m) * 255]
+            rgb = [r_prime + m, g_prime + m, b_prime + m]
             return rgb
 
         return [[values(pixmap[i][j]) for j in range(width)] for i in range(height)]
@@ -33,11 +31,9 @@ class Hsv(ColorSpace):
         width = len(pixmap[0])
 
         def values(rgb):
-            r_prime = rgb[0] / 255
-            g_prime = rgb[1] / 255
-            b_prime = rgb[2] / 255
-            cmax = max(r_prime, g_prime, b_prime)
-            cmin = min(r_prime, g_prime, b_prime)
+            r, g, b = rgb[0], rgb[1], rgb[2]
+            cmax = max(r, g, b)
+            cmin = min(r, g, b)
             delta = cmax - cmin
             V = cmax
             H = 0
@@ -46,13 +42,13 @@ class Hsv(ColorSpace):
                 S = delta / cmax
             if delta != 0:
                 H = 60 / 359
-                if cmax == r_prime:
-                    H *= np.mod((g_prime - b_prime) / delta, 6)
-                if cmax == g_prime:
-                    H *= (b_prime - r_prime) / delta + 2
-                if cmax == b_prime:
-                    H *= (r_prime - g_prime) / delta + 4
-            hsv = [H * 255, S * 255, V * 255]
+                if cmax == r:
+                    H *= np.mod((g - b) / delta, 6)
+                if cmax == g:
+                    H *= (b - r) / delta + 2
+                if cmax == b:
+                    H *= (r - g) / delta + 4
+            hsv = [H, S, V]
             return hsv
 
         return [[values(pixmap[i][j]) for j in range(width)] for i in range(height)]

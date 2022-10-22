@@ -8,9 +8,7 @@ class Hsl(ColorSpace):
         width = len(pixmap[0])
 
         def values(hsl):
-            H = hsl[0] / 255 * 359
-            S = hsl[1] / 255
-            L = hsl[2] / 255
+            H, S, L = hsl[0] * 359, hsl[1], hsl[2]
             C = (1 - np.abs(2 * L - 1)) * S
             X = C * (1 - np.abs(np.mod(H / 60, 2) - 1))
             m = L - C / 2
@@ -23,7 +21,7 @@ class Hsl(ColorSpace):
                 5: (C, 0, X)
             }
             r_prime, g_prime, b_prime = rgb_dict[H // 6]
-            rgb = [(r_prime + m) * 255, (g_prime + m) * 255, (b_prime + m) * 255]
+            rgb = [r_prime + m, g_prime + m, b_prime + m]
             return rgb
 
         return [[values(pixmap[i][j]) for j in range(width)] for i in range(height)]
@@ -33,11 +31,9 @@ class Hsl(ColorSpace):
         width = len(pixmap[0])
 
         def values(rgb):
-            r_prime = rgb[0] / 255
-            g_prime = rgb[1] / 255
-            b_prime = rgb[2] / 255
-            cmax = max(r_prime, g_prime, b_prime)
-            cmin = min(r_prime, g_prime, b_prime)
+            r, g, b = rgb[0], rgb[1], rgb[2]
+            cmax = max(r, g, b)
+            cmin = min(r, g, b)
             delta = cmax - cmin
             L = (cmax + cmin) / 2
             H = 0
@@ -45,13 +41,13 @@ class Hsl(ColorSpace):
             if delta != 0:
                 S = delta / (1 - np.abs(2 * L - 1))
                 H = 60 / 359
-                if cmax == r_prime:
-                    H *= np.mod((g_prime - b_prime) / delta, 6)
-                if cmax == g_prime:
-                    H *= (b_prime - r_prime) / delta + 2
-                if cmax == b_prime:
-                    H *= (r_prime - g_prime) / delta + 4
-            hsl = [H * 255, S * 255, L * 255]
+                if cmax == r:
+                    H *= np.mod((g - b) / delta, 6)
+                if cmax == g:
+                    H *= (b - r) / delta + 2
+                if cmax == b:
+                    H *= (r - g) / delta + 4
+            hsl = [H, S, L]
             return hsl
 
         return [[values(pixmap[i][j]) for j in range(width)] for i in range(height)]
