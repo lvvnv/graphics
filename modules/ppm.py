@@ -10,7 +10,7 @@ def read_ppm(file):
     header = file.readline()
     assert header[:2] == b'P6'
     width, height = [int(i) for i in file.readline()[:7].split()]
-    return [[[ord(file.read(1)) for _ in range(3)] for _ in range(width)] for _ in range(height)]
+    return [[[ord(file.read(1)) for _ in range(3)] for _ in range(width)] for _ in range(height)], width, height
 
 
 def create_ppm(pixel_map):
@@ -29,12 +29,3 @@ def create_ppm(pixel_map):
     buff.tofile(f)
     f.close()
 
-
-def crete_raster_sample_map(pgm_path):
-    if pgm_path is None:
-        pgm_path = image_sample_path
-    f = open(pgm_path, 'rb')
-    im = read_ppm(f)
-    f.close()
-    im = np.array(im)
-    return im
