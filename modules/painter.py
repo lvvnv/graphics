@@ -2,8 +2,8 @@ from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QAction
 
-from pgm import create_pgm
-from ppm import create_ppm
+from modules.pgm import create_pgm
+from modules.ppm import create_ppm
 
 
 # Рисовалка

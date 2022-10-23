@@ -2,8 +2,8 @@ from PyQt5 import QtGui
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QLabel, QMainWindow
 
-import pgm
-import ppm
+import modules.pgm as pgm
+import modules.ppm as ppm
 
 
 # Картинка
