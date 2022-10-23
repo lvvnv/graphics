@@ -2,8 +2,10 @@ from color_spaces.colorspace import ColorSpace
 
 
 class Rgb(ColorSpace):
-    def from_this(self, pixmap):
+    @classmethod
+    def to_rgb_pixmap(cls, pixmap):
         return pixmap
 
-    def to_this(self, pixmap):
+    @classmethod
+    def from_rgb_pixmap(cls, pixmap):
         return pixmap

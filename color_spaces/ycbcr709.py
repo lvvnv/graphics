@@ -3,7 +3,8 @@ import numpy as np
 
 
 class YCbCr709(ColorSpace):
-    def from_this(self, pixmap):
+    @classmethod
+    def to_rgb_pixmap(cls, pixmap):
         height = len(pixmap)
         width = len(pixmap[0])
 
@@ -13,7 +14,8 @@ class YCbCr709(ColorSpace):
 
         return [[values(pixmap[i][j]) for j in range(width)] for i in range(height)]
 
-    def to_this(self, pixmap):
+    @classmethod
+    def from_rgb_pixmap(cls, pixmap):
         height = len(pixmap)
         width = len(pixmap[0])
 

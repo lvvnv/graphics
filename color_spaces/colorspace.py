@@ -1,6 +1,8 @@
 class ColorSpace:
-    def from_this(self, pixmap):
+    @classmethod
+    def to_rgb_pixmap(cls, pixmap):
         pass
 
-    def to_this(self, pixmap):
+    @classmethod
+    def from_rgb_pixmap(cls, pixmap):
         pass
