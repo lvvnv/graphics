@@ -1,5 +1,4 @@
 import array
-import numpy as np
 
 image_paint_path = "../images/paint.ppm"
 image_sample_path = "../images/sample_640×426.ppm"
@@ -10,6 +9,7 @@ def read_ppm(file):
     header = file.readline()
     assert header[:2] == b'P6'
     width, height = [int(i) for i in file.readline().split()]
+    depth = file.readline(3)
     return [[[ord(file.read(1)) for _ in range(3)] for _ in range(width)] for _ in range(height)], width, height
 
 

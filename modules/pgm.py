@@ -1,5 +1,4 @@
 import array
-import numpy as np
 
 image_paint_path = "../images/paint.pgm"
 image_sample_path = "../images/sample_640×426.pgm"
@@ -10,6 +9,7 @@ def read_pgm(file):
     header = file.readline()
     assert header[:2] == b'P5'
     width, height = [int(x) for x in file.readline().split()]
+    depth = file.readline(3)
     return [[ord(file.read(1)) for _ in range(width)] for _ in range(height)], width, height
 
 
