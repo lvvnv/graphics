@@ -1,5 +1,7 @@
 import ast
 
+# todo: add colorspaces to cfg file
+
 class ConfigParser:
     def __init__(self, config_path):
         self.config_path = config_path
