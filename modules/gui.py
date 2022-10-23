@@ -67,7 +67,8 @@ class Window(QMainWindow):
                 painter.setPen(pen)
                 painter.drawPoint(x, y)
         painter.end()
-        self.setGeometry(self.left, self.top, self.width, self.height)
+        self.resize(self.width, self.height)
+        self.setFixedSize(self.layout().sizeHint())
         self.update()
 
     def open_file(self):

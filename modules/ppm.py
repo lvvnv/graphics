@@ -9,7 +9,7 @@ image_sample_path = "../images/sample_640×426.ppm"
 def read_ppm(file):
     header = file.readline()
     assert header[:2] == b'P6'
-    width, height = [int(i) for i in file.readline()[:7].split()]
+    width, height = [int(i) for i in file.readline().split()]
     return [[[ord(file.read(1)) for _ in range(3)] for _ in range(width)] for _ in range(height)], width, height
 
 
