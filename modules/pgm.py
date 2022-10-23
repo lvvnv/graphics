@@ -1,5 +1,4 @@
 import array
-
 import numpy as np
 
 image_paint_path = "../images/paint.pgm"

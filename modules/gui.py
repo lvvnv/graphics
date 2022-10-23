@@ -7,6 +7,7 @@ from modules.image import Image
 from modules.painter import Painter
 from modules.config_module import ConfigParser
 
+
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -58,8 +59,6 @@ class Window(QMainWindow):
             ppm_ex = Image(self)
             ppm_ex.draw_ppm_sample(self.current_image)
 
-
-
     def _createMenuBar(self):
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu('&File')
@@ -67,22 +66,6 @@ class Window(QMainWindow):
         open_file_action = QAction('&Open', self)
         open_file_action.triggered.connect(self.open_file)
         file_menu.addAction(open_file_action)
-
-        # p5_action = QAction('&P5', self)
-        # p5_action.triggered.connect(self.open_pgm)
-        # file_menu.addAction(p5_action)
-        #
-        # p6_action = QAction('&P6', self)
-        # p6_action.triggered.connect(self.open_ppm)
-        # file_menu.addAction(p6_action)
-        #
-        # p5_action_painted = QAction('&P5 - painted', self)
-        # p5_action_painted.triggered.connect(self.open_pgm_painted)
-        # file_menu.addAction(p5_action_painted)
-        #
-        # p6_action_painted = QAction('&P6 - painted', self)
-        # p6_action_painted.triggered.connect(self.open_ppm_painted)
-        # file_menu.addAction(p6_action_painted)
 
         painter = menu_bar.addAction('&Paint')
         painter.triggered.connect(self.open_painter)

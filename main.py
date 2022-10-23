@@ -3,6 +3,7 @@ from modules.gui import Window
 
 import sys
 
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     win = Window()
