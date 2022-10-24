@@ -31,10 +31,10 @@ def create_ppm(pixel_map):
     f.close()
 
 
-def crete_raster_sample_map(pgm_path):
-    if pgm_path is None:
-        pgm_path = image_sample_path
-    f = open(pgm_path, 'rb')
+def create_raster_sample_map(ppm_path):
+    if ppm_path is None:
+        ppm_path = image_sample_path
+    f = open(ppm_path, 'rb')
     im = read_ppm(f)
     f.close()
     im = np.array(im)

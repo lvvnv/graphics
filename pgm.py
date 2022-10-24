@@ -30,7 +30,7 @@ def create_pgm(pixel_map):
     f.close()
 
 
-def crete_raster_sample_map(pgm_path):
+def create_raster_sample_map(pgm_path):
     if pgm_path is None:
         pgm_path = image_sample_path
     f = open(pgm_path, 'rb')
