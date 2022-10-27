@@ -7,6 +7,13 @@ import modules.ppm as ppm
 import numpy as np
 from modules.painter import Painter
 from modules.config_module import ConfigParser
+from modules.color_spaces.hsv import Hsv
+from modules.color_spaces.hsl import Hsl
+from modules.color_spaces.rgb import Rgb
+from modules.color_spaces.cmy import Cmy
+from modules.color_spaces.ycbcr601 import YCbCr601
+from modules.color_spaces.ycbcr709 import YCbCr709
+from modules.color_spaces.ycocg import YCoCg
 
 
 class Window(QMainWindow):
@@ -31,6 +38,9 @@ class Window(QMainWindow):
         self.configModule.read_config()
 
         self.current_image = None
+        self.scoped_colorspaces = []
+        self.current_colorspace = 0
+        self.defined_colorspace = None
 
         self._createMenuBar()
 
@@ -80,6 +90,41 @@ class Window(QMainWindow):
         self.current_image = filepath
         self.print_image(filetype)
 
+    def switch_to_cmy(self):
+        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        self.current_colorspace = 0
+        self.defined_colorspace = Cmy()
+
+    def switch_to_hsl(self):
+        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        self.current_colorspace = 1
+        self.defined_colorspace = Hsl()
+
+    def switch_to_hsv(self):
+        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        self.current_colorspace = 2
+        self.defined_colorspace = Hsv()
+
+    def switch_to_rgb(self):
+        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        self.current_colorspace = 3
+        self.defined_colorspace = Rgb()
+
+    def switch_to_ycbcr601(self):
+        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        self.current_colorspace = 4
+        self.defined_colorspace = YCbCr601()
+
+    def switch_to_ycbcr709(self):
+        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        self.current_colorspace = 5
+        self.defined_colorspace = YCbCr709()
+
+    def switch_to_ycocg(self):
+        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        self.current_colorspace = 6
+        self.defined_colorspace = YCoCg()
+
     def _createMenuBar(self):
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu('&File')
@@ -90,3 +135,60 @@ class Window(QMainWindow):
 
         painter = menu_bar.addAction('&Paint')
         painter.triggered.connect(self.open_painter)
+
+        """
+        Colorspace block
+        
+        Checkbox menu
+        Only one can picked at a time
+        call self.defined_colorspace when printing
+        """
+        colorspaces = menu_bar.addMenu('&Colorspaces')
+
+        cmy_colorspace = QAction('&CMY', self)
+        cmy_colorspace.triggered.connect(self.switch_to_cmy)
+        cmy_colorspace.setCheckable(True)
+        colorspaces.addAction(cmy_colorspace)
+
+        hsl_colorspace = QAction('&HSL', self)
+        hsl_colorspace.triggered.connect(self.switch_to_hsl)
+        hsl_colorspace.setCheckable(True)
+        colorspaces.addAction(hsl_colorspace)
+
+        hsv_colorspace = QAction('&HSV', self)
+        hsv_colorspace.triggered.connect(self.switch_to_hsv)
+        hsv_colorspace.setCheckable(True)
+        colorspaces.addAction(hsv_colorspace)
+
+        rgb_colorspace = QAction('&RGB', self)
+        rgb_colorspace.triggered.connect(self.switch_to_rgb)
+        rgb_colorspace.setCheckable(True)
+        rgb_colorspace.setChecked(True)
+        colorspaces.addAction(rgb_colorspace)
+        self.current_colorspace = 3
+
+        ycbcr601_colorspace = QAction('&YCbCr601', self)
+        ycbcr601_colorspace.triggered.connect(self.switch_to_ycbcr601)
+        ycbcr601_colorspace.setCheckable(True)
+        colorspaces.addAction(ycbcr601_colorspace)
+
+        ycbcr709_colorspace = QAction('&YCbCr709', self)
+        ycbcr709_colorspace.triggered.connect(self.switch_to_ycbcr709)
+        ycbcr709_colorspace.setCheckable(True)
+        colorspaces.addAction(ycbcr709_colorspace)
+
+        ycocg_colorspace = QAction('&YCoCg', self)
+        ycocg_colorspace.triggered.connect(self.switch_to_ycocg)
+        ycocg_colorspace.setCheckable(True)
+        colorspaces.addAction(ycocg_colorspace)
+
+        self.scoped_colorspaces += \
+            [
+                cmy_colorspace,
+                hsl_colorspace,
+                hsv_colorspace,
+                rgb_colorspace,
+                ycbcr601_colorspace,
+                ycbcr709_colorspace,
+                ycocg_colorspace
+            ]
