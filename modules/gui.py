@@ -28,11 +28,6 @@ class Window(QMainWindow):
         self.label = QLabel()
 
         self.initUI()
-        # self.setWindowTitle("Menu")
-        # self.resize(400, 200)
-        # self.centralWidget = QLabel()
-        # self.centralWidget.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        # self.setCentralWidget(self.centralWidget)
 
         self.configModule = ConfigParser("./config.cfg")
         self.configModule.read_config()
@@ -93,37 +88,37 @@ class Window(QMainWindow):
     def switch_to_cmy(self):
         self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 0
-        self.defined_colorspace = Cmy()
+        self.defined_colorspace = Cmy
 
     def switch_to_hsl(self):
         self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 1
-        self.defined_colorspace = Hsl()
+        self.defined_colorspace = Hsl
 
     def switch_to_hsv(self):
         self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 2
-        self.defined_colorspace = Hsv()
+        self.defined_colorspace = Hsv
 
     def switch_to_rgb(self):
         self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 3
-        self.defined_colorspace = Rgb()
+        self.defined_colorspace = Rgb
 
     def switch_to_ycbcr601(self):
         self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 4
-        self.defined_colorspace = YCbCr601()
+        self.defined_colorspace = YCbCr601
 
     def switch_to_ycbcr709(self):
         self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 5
-        self.defined_colorspace = YCbCr709()
+        self.defined_colorspace = YCbCr709
 
     def switch_to_ycocg(self):
         self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 6
-        self.defined_colorspace = YCoCg()
+        self.defined_colorspace = YCoCg
 
     def _createMenuBar(self):
         menu_bar = self.menuBar()
@@ -139,7 +134,7 @@ class Window(QMainWindow):
         """
         Colorspace block
         
-        Checkbox menu
+        Radiobutton
         Only one can picked at a time
         call self.defined_colorspace when printing
         """
