@@ -161,6 +161,7 @@ class Window(QMainWindow):
         rgb_colorspace.setChecked(True)
         colorspaces.addAction(rgb_colorspace)
         self.current_colorspace = 3
+        self.defined_colorspace = Rgb
 
         ycbcr601_colorspace = QAction('&YCbCr601', self)
         ycbcr601_colorspace.triggered.connect(self.switch_to_ycbcr601)
