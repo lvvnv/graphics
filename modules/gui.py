@@ -34,7 +34,7 @@ class Window(QMainWindow):
 
         self.current_image = None
         self.scoped_colorspaces = []
-        self.current_colorspace = 0
+        self.current_colorspace = None
         self.defined_colorspace = None
 
         self._createMenuBar()
@@ -86,37 +86,44 @@ class Window(QMainWindow):
         self.print_image(filetype)
 
     def switch_to_cmy(self):
-        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        if self.defined_colorspace is not None:
+            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 0
         self.defined_colorspace = Cmy
 
     def switch_to_hsl(self):
-        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        if self.defined_colorspace is not None:
+            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 1
         self.defined_colorspace = Hsl
 
     def switch_to_hsv(self):
-        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        if self.defined_colorspace is not None:
+            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 2
         self.defined_colorspace = Hsv
 
     def switch_to_rgb(self):
-        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        if self.defined_colorspace is not None:
+            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 3
         self.defined_colorspace = Rgb
 
     def switch_to_ycbcr601(self):
-        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        if self.defined_colorspace is not None:
+            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 4
         self.defined_colorspace = YCbCr601
 
     def switch_to_ycbcr709(self):
-        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        if self.defined_colorspace is not None:
+            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 5
         self.defined_colorspace = YCbCr709
 
     def switch_to_ycocg(self):
-        self.scoped_colorspaces[self.current_colorspace].setChecked(False)
+        if self.defined_colorspace is not None:
+            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 6
         self.defined_colorspace = YCoCg
 
@@ -160,8 +167,6 @@ class Window(QMainWindow):
         rgb_colorspace.setCheckable(True)
         rgb_colorspace.setChecked(True)
         colorspaces.addAction(rgb_colorspace)
-        self.current_colorspace = 3
-        self.defined_colorspace = Rgb
 
         ycbcr601_colorspace = QAction('&YCbCr601', self)
         ycbcr601_colorspace.triggered.connect(self.switch_to_ycbcr601)
@@ -188,3 +193,4 @@ class Window(QMainWindow):
                 ycbcr709_colorspace,
                 ycocg_colorspace
             ]
+        self.switch_to_rgb()
