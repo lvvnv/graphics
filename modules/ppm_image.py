@@ -1,4 +1,4 @@
-from pgm_image import PgmImage
+from modules.pgm_image import PgmImage
 
 
 class PpmImage:

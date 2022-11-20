@@ -1,17 +1,16 @@
 import array
 
-import numpy as np
-
-image_paint_path = "./images/paint.ppm"
-image_sample_path = "./images/sample_640×426.ppm"
+image_paint_path = "../images/paint.ppm"
+image_sample_path = "../images/sample_640×426.ppm"
 
 
 # P6
 def read_ppm(file):
     header = file.readline()
     assert header[:2] == b'P6'
-    width, height = [int(i) for i in file.readline()[:7].split()]
-    return [[[ord(file.read(1)) for _ in range(3)] for _ in range(width)] for _ in range(height)]
+    width, height = [int(i) for i in file.readline().split()]
+    depth = file.readline(3)
+    return [[[ord(file.read(1)) for _ in range(3)] for _ in range(width)] for _ in range(height)], width, height
 
 
 def create_ppm(pixel_map):
@@ -30,12 +29,3 @@ def create_ppm(pixel_map):
     buff.tofile(f)
     f.close()
 
-
-def create_raster_sample_map(ppm_path):
-    if ppm_path is None:
-        ppm_path = image_sample_path
-    f = open(ppm_path, 'rb')
-    im = read_ppm(f)
-    f.close()
-    im = np.array(im)
-    return im

@@ -1,4 +1,4 @@
-from color_spaces.colorspace import ColorSpace
+from modules.color_spaces.colorspace import ColorSpace
 
 
 class Cmy(ColorSpace):
