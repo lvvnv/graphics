@@ -1,19 +1,19 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QLabel, QMainWindow, QAction, QFileDialog
+import numpy as np
 from PyQt5.QtGui import QPixmap, QColor, QPainter, QPen
+from PyQt5.QtWidgets import QLabel, QMainWindow, QAction, QFileDialog, QColorDialog, QInputDialog
 
 import modules.pgm as pgm
 import modules.ppm as ppm
-import numpy as np
-from modules.painter import Painter
-from modules.config_module import ConfigParser
-from modules.color_spaces.hsv import Hsv
-from modules.color_spaces.hsl import Hsl
-from modules.color_spaces.rgb import Rgb
 from modules.color_spaces.cmy import Cmy
+from modules.color_spaces.hsl import Hsl
+from modules.color_spaces.hsv import Hsv
+from modules.color_spaces.rgb import Rgb
 from modules.color_spaces.ycbcr601 import YCbCr601
 from modules.color_spaces.ycbcr709 import YCbCr709
 from modules.color_spaces.ycocg import YCoCg
+from modules.config_module import ConfigParser
+from modules.line_drawer import LineDrawer
+from modules.painter import Painter
 
 
 class Window(QMainWindow):
@@ -25,6 +25,7 @@ class Window(QMainWindow):
         self.top = 100
         self.width = 640
         self.height = 400
+        self.raster_map = None
         self.label = QLabel()
 
         self.initUI()
@@ -37,6 +38,9 @@ class Window(QMainWindow):
         self.current_colorspace = None
         self.defined_colorspace = None
 
+        self.line_point_1 = None
+        self.line_point_2 = None
+
         self._createMenuBar()
 
     def initUI(self):
@@ -48,6 +52,16 @@ class Window(QMainWindow):
         painter = Painter(self)
         painter.show()
 
+    def draw_line(self):
+        r, g, b, a = QColorDialog.getColor().getRgb()
+        transparency, pressed = QInputDialog.getInt(self, "Transparency", "Transparency", 0, 0, 100)
+        if pressed:
+            width, pressed = QInputDialog.getInt(self, "Width", "Width", 4, 1, 10)
+            if pressed:
+                line_drawer = LineDrawer(b, g, r, transparency, width)
+                self.raster_map = line_drawer.draw(self.raster_map, self.line_point_1, self.line_point_2)
+                self.draw_raster_map("ppm")
+
     def print_image(self, _type):
         file = open(self.current_image, "rb")
         im = None
@@ -57,9 +71,15 @@ class Window(QMainWindow):
             im, self.width, self.height = ppm.read_ppm(file)
         canvas = QPixmap(self.width, self.height)
         self.label.setPixmap(canvas)
+        self.raster_map = np.array(im)
+        self.draw_raster_map(_type)
+
+    def draw_raster_map(self, _type):
         painter = QPainter(self.label.pixmap())
         pen = QPen()
-        raster_map = np.array(im)
+        raster_map = self.raster_map
+        if raster_map is None:
+            return
         for y in range(len(raster_map)):
             row = raster_map[y]
             for x in range(len(row)):
@@ -194,3 +214,15 @@ class Window(QMainWindow):
                 ycocg_colorspace
             ]
         self.switch_to_rgb()
+
+        drawer = menu_bar.addMenu('&Draw')
+        line_drawer = QAction('&Line', self)
+        line_drawer.triggered.connect(self.draw_line)
+        drawer.addAction(line_drawer)
+
+    def mousePressEvent(self, e):
+        x, y = e.x(), e.y()
+        if e.button() == 1:
+            self.line_point_1 = (x, y)
+        elif e.button() == 2:
+            self.line_point_2 = (x, y)
