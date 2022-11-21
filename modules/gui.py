@@ -33,6 +33,7 @@ class Window(QMainWindow):
         self.configModule = ConfigParser("./config.cfg")
         self.configModule.read_config()
 
+        self._type = None
         self.current_image = None
         self.scoped_colorspaces = []
         self.current_colorspace = None
@@ -58,9 +59,9 @@ class Window(QMainWindow):
         if pressed:
             width, pressed = QInputDialog.getInt(self, "Width", "Width", 4, 1, 10)
             if pressed:
-                line_drawer = LineDrawer(b, g, r, transparency, width)
+                line_drawer = LineDrawer(b, g, r, self._type, transparency, width)
                 self.raster_map = line_drawer.draw(self.raster_map, self.line_point_1, self.line_point_2)
-                self.draw_raster_map("ppm")
+                self.draw_raster_map(self._type)
 
     def print_image(self, _type):
         file = open(self.current_image, "rb")
@@ -75,11 +76,11 @@ class Window(QMainWindow):
         self.draw_raster_map(_type)
 
     def draw_raster_map(self, _type):
+        raster_map = self.raster_map
+        if self.label.pixmap() is None or raster_map is None:
+            return
         painter = QPainter(self.label.pixmap())
         pen = QPen()
-        raster_map = self.raster_map
-        if raster_map is None:
-            return
         for y in range(len(raster_map)):
             row = raster_map[y]
             for x in range(len(row)):
@@ -102,6 +103,7 @@ class Window(QMainWindow):
         if filetype not in self.configModule.config["accepted_files"]:
             print("wrong type of image file")
             return
+        self._type = filetype
         self.current_image = filepath
         self.print_image(filetype)
 
