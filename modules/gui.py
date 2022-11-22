@@ -86,8 +86,11 @@ class Window(QMainWindow):
 
     def draw_raster_map(self, _type):
         raster_map = self.raster_map
-        if self.label.pixmap() is None or raster_map is None:
+        if raster_map is None:
             return
+        if self.label.pixmap() is None:
+            canvas = QPixmap(self.width, self.height)
+            self.label.setPixmap(canvas)
         painter = QPainter(self.label.pixmap())
         pen = QPen()
         for y in range(len(raster_map)):
