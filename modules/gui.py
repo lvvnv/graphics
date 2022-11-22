@@ -12,9 +12,9 @@ from modules.color_spaces.ycbcr601 import YCbCr601
 from modules.color_spaces.ycbcr709 import YCbCr709
 from modules.color_spaces.ycocg import YCoCg
 from modules.config_module import ConfigParser
+from modules.dithering import Dithering
 from modules.line_drawer import LineDrawer
 from modules.painter import Painter
-from modules.dithering import Dithering
 
 
 class Window(QMainWindow):
@@ -120,12 +120,12 @@ class Window(QMainWindow):
     def pgm_gradient(self):
         self._type = "pgm"
         self.raster_map = Dithering.pgm_gradient(self.height, self.width)
-        self.save_file()
+        self.draw_raster_map(self._type)
 
     def ppm_gradient(self):
         self._type = "ppm"
         self.raster_map = Dithering.ppm_gradient(self.height, self.width)
-        self.save_file()
+        self.draw_raster_map(self._type)
 
     def ordered_dithering(self):
         if self._type == "pgm":
@@ -133,13 +133,13 @@ class Window(QMainWindow):
             if pressed:
                 dither = Dithering(self.raster_map, width)
                 self.raster_map = dither.ordered_pgm()
-                self.save_file()
+                self.draw_raster_map(self._type)
         elif self._type == "ppm":
             width, pressed = QInputDialog.getInt(self, "Bitrate", "Bitrate", 1, 1, 8)
             if pressed:
                 dither = Dithering(self.raster_map, width)
                 self.raster_map = dither.ordered_ppm()
-                self.save_file()
+                self.draw_raster_map(self._type)
 
     def random_dithering(self):
         if self._type == "pgm":
@@ -147,13 +147,13 @@ class Window(QMainWindow):
             if pressed:
                 dither = Dithering(self.raster_map, width)
                 self.raster_map = dither.random_pgm()
-                self.save_file()
+                self.draw_raster_map(self._type)
         elif self._type == "ppm":
             width, pressed = QInputDialog.getInt(self, "Bitrate", "Bitrate", 1, 1, 8)
             if pressed:
                 dither = Dithering(self.raster_map, width)
                 self.raster_map = dither.random_ppm()
-                self.save_file()
+                self.draw_raster_map(self._type)
 
     def fs_dithering(self):
         if self._type == "pgm":
@@ -161,13 +161,13 @@ class Window(QMainWindow):
             if pressed:
                 dither = Dithering(self.raster_map, width)
                 self.raster_map = dither.floyd_steinberg_pgm()
-                self.save_file()
+                self.draw_raster_map(self._type)
         elif self._type == "ppm":
             width, pressed = QInputDialog.getInt(self, "Bitrate", "Bitrate", 1, 1, 8)
             if pressed:
                 dither = Dithering(self.raster_map, width)
                 self.raster_map = dither.floyd_steinberg_ppm()
-                self.save_file()
+                self.draw_raster_map(self._type)
 
     def atkinson_dithering(self):
         if self._type == "pgm":
@@ -175,13 +175,13 @@ class Window(QMainWindow):
             if pressed:
                 dither = Dithering(self.raster_map, width)
                 self.raster_map = dither.atkinson_pgm()
-                self.save_file()
+                self.draw_raster_map(self._type)
         if self._type == "ppm":
             width, pressed = QInputDialog.getInt(self, "Bitrate", "Bitrate", 1, 1, 8)
             if pressed:
                 dither = Dithering(self.raster_map, width)
                 self.raster_map = dither.atkinson_ppm()
-                self.save_file()
+                self.draw_raster_map(self._type)
 
     def switch_to_cmy(self):
         if self.defined_colorspace is not None:

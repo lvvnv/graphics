@@ -1,5 +1,6 @@
-import numpy as np
 import random
+
+import numpy as np
 
 
 class Dithering:
@@ -58,7 +59,7 @@ class Dithering:
         def new_value(i, j, value):
             return self.nearest_color((M[i % 8, j % 8] - 0.5) / (2 ** self.bitrate) + value)
 
-        return [[[255 * new_value(i, j, self.raster_map[i, j, k]) for k in range(3)]
+        return [[[255 * new_value(i, j, self.raster_map[i, j, k]) for k in range(2, -1, -1)]
                  for j in range(self.width)] for i in range(self.height)]
 
     def random_pgm(self):
