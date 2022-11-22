@@ -14,6 +14,7 @@ from modules.color_spaces.ycocg import YCoCg
 from modules.config_module import ConfigParser
 from modules.line_drawer import LineDrawer
 from modules.painter import Painter
+from modules.dithering import Dithering
 
 
 class Window(QMainWindow):
@@ -116,6 +117,72 @@ class Window(QMainWindow):
         elif self._type == "ppm":
             ppm.create_ppm(self.raster_map, filepath)
 
+    def pgm_gradient(self):
+        self._type = "pgm"
+        self.raster_map = Dithering.pgm_gradient(self.height, self.width)
+        self.save_file()
+
+    def ppm_gradient(self):
+        self._type = "ppm"
+        self.raster_map = Dithering.ppm_gradient(self.height, self.width)
+        self.save_file()
+
+    def ordered_dithering(self):
+        if self._type == "pgm":
+            width, pressed = QInputDialog.getInt(self, "Bitrate", "Bitrate", 1, 1, 8)
+            if pressed:
+                dither = Dithering(self.raster_map, width)
+                self.raster_map = dither.ordered_pgm()
+                self.save_file()
+        elif self._type == "ppm":
+            width, pressed = QInputDialog.getInt(self, "Bitrate", "Bitrate", 1, 1, 8)
+            if pressed:
+                dither = Dithering(self.raster_map, width)
+                self.raster_map = dither.ordered_ppm()
+                self.save_file()
+
+    def random_dithering(self):
+        if self._type == "pgm":
+            width, pressed = QInputDialog.getInt(self, "Bitrate", "Bitrate", 1, 1, 8)
+            if pressed:
+                dither = Dithering(self.raster_map, width)
+                self.raster_map = dither.random_pgm()
+                self.save_file()
+        elif self._type == "ppm":
+            width, pressed = QInputDialog.getInt(self, "Bitrate", "Bitrate", 1, 1, 8)
+            if pressed:
+                dither = Dithering(self.raster_map, width)
+                self.raster_map = dither.random_ppm()
+                self.save_file()
+
+    def fs_dithering(self):
+        if self._type == "pgm":
+            width, pressed = QInputDialog.getInt(self, "Bitrate", "Bitrate", 1, 1, 8)
+            if pressed:
+                dither = Dithering(self.raster_map, width)
+                self.raster_map = dither.floyd_steinberg_pgm()
+                self.save_file()
+        elif self._type == "ppm":
+            width, pressed = QInputDialog.getInt(self, "Bitrate", "Bitrate", 1, 1, 8)
+            if pressed:
+                dither = Dithering(self.raster_map, width)
+                self.raster_map = dither.floyd_steinberg_ppm()
+                self.save_file()
+
+    def atkinson_dithering(self):
+        if self._type == "pgm":
+            width, pressed = QInputDialog.getInt(self, "Bitrate", "Bitrate", 1, 1, 8)
+            if pressed:
+                dither = Dithering(self.raster_map, width)
+                self.raster_map = dither.atkinson_pgm()
+                self.save_file()
+        if self._type == "ppm":
+            width, pressed = QInputDialog.getInt(self, "Bitrate", "Bitrate", 1, 1, 8)
+            if pressed:
+                dither = Dithering(self.raster_map, width)
+                self.raster_map = dither.atkinson_ppm()
+                self.save_file()
+
     def switch_to_cmy(self):
         if self.defined_colorspace is not None:
             self.scoped_colorspaces[self.current_colorspace].setChecked(False)
@@ -172,6 +239,34 @@ class Window(QMainWindow):
 
         painter = menu_bar.addAction('&Paint')
         painter.triggered.connect(self.open_painter)
+
+        generate_menu = menu_bar.addMenu('&Generate')
+
+        generate_pgm = QAction('&PGM', self)
+        generate_pgm.triggered.connect(self.pgm_gradient)
+        generate_menu.addAction(generate_pgm)
+
+        generate_ppm = QAction('&PPM', self)
+        generate_ppm.triggered.connect(self.ppm_gradient)
+        generate_menu.addAction(generate_ppm)
+
+        dithering_menu = menu_bar.addMenu('&Dithering')
+
+        dithering_ordered = QAction('&Ordered', self)
+        dithering_ordered.triggered.connect(self.ordered_dithering)
+        dithering_menu.addAction(dithering_ordered)
+
+        dithering_random = QAction('&Random', self)
+        dithering_random.triggered.connect(self.random_dithering)
+        dithering_menu.addAction(dithering_random)
+
+        dithering_fs = QAction('&Floyd-Steinberg', self)
+        dithering_fs.triggered.connect(self.fs_dithering)
+        dithering_menu.addAction(dithering_fs)
+
+        dithering_atkinson = QAction('&Atkinson', self)
+        dithering_atkinson.triggered.connect(self.atkinson_dithering)
+        dithering_menu.addAction(dithering_atkinson)
 
         """
         Colorspace block
