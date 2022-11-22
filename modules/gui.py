@@ -107,6 +107,15 @@ class Window(QMainWindow):
         self.current_image = filepath
         self.print_image(filetype)
 
+    def save_file(self):
+        if self._type is None or self.raster_map is None:
+            return
+        filepath = QFileDialog.getSaveFileName(self, 'Save file', './images', '.' + self._type)[0]
+        if self._type == "pgm":
+            pgm.create_pgm(self.raster_map, filepath)
+        elif self._type == "ppm":
+            ppm.create_ppm(self.raster_map, filepath)
+
     def switch_to_cmy(self):
         if self.defined_colorspace is not None:
             self.scoped_colorspaces[self.current_colorspace].setChecked(False)
@@ -156,6 +165,10 @@ class Window(QMainWindow):
         open_file_action = QAction('&Open', self)
         open_file_action.triggered.connect(self.open_file)
         file_menu.addAction(open_file_action)
+
+        save_file_action = QAction('&Save', self)
+        save_file_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_file_action)
 
         painter = menu_bar.addAction('&Paint')
         painter.triggered.connect(self.open_painter)
