@@ -16,7 +16,7 @@ def read_pgm(file):
 def create_pgm(pixel_map, path=image_paint_path):
     header = b'P5\n'
     size = bytes(f"{len(pixel_map[0])} {len(pixel_map)}\n", encoding='utf-8')
-    depth = b'255\n'
+    depth = b'255'
     f = open(path, 'wb')
     f.write(header)
     f.write(size)
