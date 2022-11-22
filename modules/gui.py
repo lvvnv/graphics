@@ -76,6 +76,14 @@ class Window(QMainWindow):
         self.raster_map = np.array(im)
         self.draw_raster_map(_type)
 
+    def close_image(self):
+        self.current_image = None
+        self.raster_map = None
+        self._type = None
+        self.label.clear()
+        self.initUI()
+        self.update()
+
     def draw_raster_map(self, _type):
         raster_map = self.raster_map
         if self.label.pixmap() is None or raster_map is None:
@@ -116,6 +124,7 @@ class Window(QMainWindow):
             pgm.create_pgm(self.raster_map, filepath)
         elif self._type == "ppm":
             ppm.create_ppm(self.raster_map, filepath)
+
 
     def pgm_gradient(self):
         self._type = "pgm"
@@ -183,47 +192,73 @@ class Window(QMainWindow):
                 self.raster_map = dither.atkinson_ppm()
                 self.draw_raster_map(self._type)
 
+    def switching(self):
+        """
+        формально, нужно тут нужно получать
+        растер мапу для картинки или обновлять
+        текущую
+        Полученная raster_map должна быть в том colorspace,
+        который сейчас выбран (то есть, self.defined_colorspace)
+
+        :return: raster_map или void, если менять raster_map прямо здесь
+        """
+        pass
+
     def switch_to_cmy(self):
         if self.defined_colorspace is not None:
             self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 0
         self.defined_colorspace = Cmy
+        self.switching()
+        self.draw_raster_map(self._type)
 
     def switch_to_hsl(self):
         if self.defined_colorspace is not None:
             self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 1
         self.defined_colorspace = Hsl
+        self.switching()
+        self.draw_raster_map(self._type)
 
     def switch_to_hsv(self):
         if self.defined_colorspace is not None:
             self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 2
         self.defined_colorspace = Hsv
+        self.switching()
+        self.draw_raster_map(self._type)
 
     def switch_to_rgb(self):
         if self.defined_colorspace is not None:
             self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 3
         self.defined_colorspace = Rgb
+        self.switching()
+        self.draw_raster_map(self._type)
 
     def switch_to_ycbcr601(self):
         if self.defined_colorspace is not None:
             self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 4
         self.defined_colorspace = YCbCr601
+        self.switching()
+        self.draw_raster_map(self._type)
 
     def switch_to_ycbcr709(self):
         if self.defined_colorspace is not None:
             self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 5
         self.defined_colorspace = YCbCr709
+        self.switching()
+        self.draw_raster_map(self._type)
 
     def switch_to_ycocg(self):
         if self.defined_colorspace is not None:
             self.scoped_colorspaces[self.current_colorspace].setChecked(False)
         self.current_colorspace = 6
         self.defined_colorspace = YCoCg
+        self.switching()
+        self.draw_raster_map(self._type)
 
     def _createMenuBar(self):
         menu_bar = self.menuBar()
@@ -236,6 +271,10 @@ class Window(QMainWindow):
         save_file_action = QAction('&Save', self)
         save_file_action.triggered.connect(self.save_file)
         file_menu.addAction(save_file_action)
+
+        close_file_action = QAction('&Close', self)
+        close_file_action.triggered.connect(self.close_image)
+        file_menu.addAction(close_file_action)
 
         painter = menu_bar.addAction('&Paint')
         painter.triggered.connect(self.open_painter)

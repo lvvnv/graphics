@@ -16,7 +16,7 @@ def read_ppm(file):
 def create_ppm(pixel_map, path=image_paint_path):
     header = b'P6\n'
     size = bytes(f"{len(pixel_map[0])} {len(pixel_map)}\n", encoding='utf-8')
-    depth = b'255\n'
+    depth = b'255'
     f = open(path, 'wb')
     f.write(header)
     f.write(size)
