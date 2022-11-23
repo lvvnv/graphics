@@ -15,6 +15,7 @@ from modules.config_module import ConfigParser
 from modules.dithering import Dithering
 from modules.line_drawer import LineDrawer
 from modules.painter import Painter
+from modules.gamma_slider import GammaSlider
 
 
 class Window(QMainWindow):
@@ -42,6 +43,7 @@ class Window(QMainWindow):
 
         self.line_point_1 = None
         self.line_point_2 = None
+        self.gamma = 0
 
         self._createMenuBar()
 
@@ -101,6 +103,9 @@ class Window(QMainWindow):
                     pen.setColor(QColor(bit, bit, bit))
                 elif _type == "ppm":
                     b, g, r = [row[x][-i] for i in range(3)]
+                    r = round(((r / 255) ** (1 / self.gamma_value())) * 255)
+                    g = round(((g / 255) ** (1 / self.gamma_value())) * 255)
+                    b = round(((b / 255) ** (1 / self.gamma_value())) * 255)
                     pen.setColor(QColor(r, g, b))
                 painter.setPen(pen)
                 painter.drawPoint(x, y)
@@ -128,6 +133,14 @@ class Window(QMainWindow):
         elif self._type == "ppm":
             ppm.create_ppm(self.raster_map, filepath)
 
+    def open_gamma_slider(self):
+        gamma_slider = GammaSlider(parent=self, value=self.gamma)
+        gamma_slider.show()
+
+    def gamma_value(self):
+        if self.gamma <= 0:
+            return 1 / (1 + abs(self.gamma))
+        return 1 + self.gamma / 25
 
     def pgm_gradient(self):
         self._type = "pgm"
@@ -267,6 +280,8 @@ class Window(QMainWindow):
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu('&File')
 
+        edit_menu = menu_bar.addMenu('&Edit')
+
         open_file_action = QAction('&Open', self)
         open_file_action.triggered.connect(self.open_file)
         file_menu.addAction(open_file_action)
@@ -281,6 +296,10 @@ class Window(QMainWindow):
 
         painter = menu_bar.addAction('&Paint')
         painter.triggered.connect(self.open_painter)
+
+        gamma_action = QAction('&Gamma correction', self)
+        gamma_action.triggered.connect(self.open_gamma_slider)
+        edit_menu.addAction(gamma_action)
 
         generate_menu = menu_bar.addMenu('&Generate')
 
