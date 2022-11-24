@@ -1,8 +1,8 @@
-from modules.color_spaces.colorspace import ColorSpace
+from modules.color_spaces.colorspace import Colorspace
 import numpy as np
 
 
-class Hsv(ColorSpace):
+class Hsv:
     @classmethod
     def to_rgb_pixmap(cls, pixmap):
         height = len(pixmap)
@@ -22,8 +22,8 @@ class Hsv(ColorSpace):
                 5: (C, 0, X)
             }
             r_prime, g_prime, b_prime = rgb_dict[H // 60]
-            rgb = [r_prime + m, g_prime + m, b_prime + m]
-            return rgb
+            brg = [b_prime + m, r_prime + m, g_prime + m]
+            return brg
 
         return [[values(pixmap[i][j]) for j in range(width)] for i in range(height)]
 
@@ -33,7 +33,7 @@ class Hsv(ColorSpace):
         width = len(pixmap[0])
 
         def values(rgb):
-            r, g, b = rgb[0], rgb[1], rgb[2]
+            b, r, g = rgb[0], rgb[1], rgb[2]
             cmax = max(r, g, b)
             cmin = min(r, g, b)
             delta = cmax - cmin
@@ -46,9 +46,9 @@ class Hsv(ColorSpace):
                 H = 60 / 359
                 if cmax == r:
                     H *= np.mod((g - b) / delta, 6)
-                if cmax == g:
+                elif cmax == g:
                     H *= (b - r) / delta + 2
-                if cmax == b:
+                elif cmax == b:
                     H *= (r - g) / delta + 4
             hsv = [H, S, V]
             return hsv

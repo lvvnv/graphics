@@ -11,10 +11,12 @@ class Dithering:
         self.width = len(raster_map[0])
 
     @classmethod
-    def ppm_gradient(cls, height, width):
+    def ppm_gradient(cls, height, width, channel):
         def values(j):
             val = j / width * 255
-            return [val, 0, 0]
+            arr = [0, 0, 0]
+            arr[channel - 1] = val
+            return arr
 
         return [[values(j) for j in range(width)] for _ in range(height)]
 
