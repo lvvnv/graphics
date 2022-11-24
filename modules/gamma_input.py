@@ -1,29 +1,20 @@
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QDoubleValidator
-from PyQt5.QtWidgets import QLineEdit
+from PyQt5.QtWidgets import QInputDialog
 
 
-class GammaInput(QtWidgets.QMainWindow):
+class GammaInput:
     def __init__(self, parent=None):
-        super().__init__(parent)
         self.parent = parent
         self.initUI()
 
     def initUI(self):
-        self.line_input = QLineEdit(self)
-        self.line_input.setValidator(QDoubleValidator(0.01, 5.00, 2))
-
-        self.line_input.editingFinished.connect(self.editing_finished)
-
-        self.setGeometry(300, 100, 350, 250)
-        self.setWindowTitle('QLineEdit')
-        self.show()
+        self.line_input, pressed = QInputDialog.getDouble(self.parent, "Value", "Value", 2, 0.01, 5)
+        if pressed:
+            self.editing_finished()
 
     def gamma_value(self):
-        if float(self.line_input.text()) > 1:
-            return (float(self.line_input.text()) - 1) * 25
-        return -(1 / (float(self.line_input.text())) - 1)
+        if float(self.line_input) > 1:
+            return (float(self.line_input) - 1) * 25
+        return -(1 / (float(self.line_input)) - 1)
 
     def editing_finished(self):
         print(self.gamma_value())

@@ -13,10 +13,10 @@ from modules.color_spaces.ycbcr709 import YCbCr709
 from modules.color_spaces.ycocg import YCoCg
 from modules.config_module import ConfigParser
 from modules.dithering import Dithering
+from modules.gamma_input import GammaInput
+from modules.gamma_slider import GammaSlider
 from modules.line_drawer import LineDrawer
 from modules.painter import Painter
-from modules.gamma_slider import GammaSlider
-from modules.gamma_input import GammaInput
 
 
 class Window(QMainWindow):
@@ -140,7 +140,6 @@ class Window(QMainWindow):
 
     def open_gamma_input(self):
         gamma_input = GammaInput(parent=self)
-        gamma_input.show()
 
     def gamma_value(self):
         if self.gamma <= 0:
