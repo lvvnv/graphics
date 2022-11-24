@@ -16,6 +16,7 @@ from modules.dithering import Dithering
 from modules.line_drawer import LineDrawer
 from modules.painter import Painter
 from modules.gamma_slider import GammaSlider
+from modules.gamma_input import GammaInput
 
 
 class Window(QMainWindow):
@@ -136,6 +137,10 @@ class Window(QMainWindow):
     def open_gamma_slider(self):
         gamma_slider = GammaSlider(parent=self, value=self.gamma)
         gamma_slider.show()
+
+    def open_gamma_input(self):
+        gamma_input = GammaInput(parent=self)
+        gamma_input.show()
 
     def gamma_value(self):
         if self.gamma <= 0:
@@ -300,6 +305,10 @@ class Window(QMainWindow):
         gamma_action = QAction('&Gamma correction', self)
         gamma_action.triggered.connect(self.open_gamma_slider)
         edit_menu.addAction(gamma_action)
+
+        gamma_input_action = QAction('&Gamma correction input', self)
+        gamma_input_action.triggered.connect(self.open_gamma_input)
+        edit_menu.addAction(gamma_input_action)
 
         generate_menu = menu_bar.addMenu('&Generate')
 
