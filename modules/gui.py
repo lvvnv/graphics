@@ -11,6 +11,7 @@ from modules.color_spaces.rgb import Rgb
 from modules.color_spaces.ycbcr601 import YCbCr601
 from modules.color_spaces.ycbcr709 import YCbCr709
 from modules.color_spaces.ycocg import YCoCg
+from modules.color_spaces.colorspace import Colorspace
 from modules.config_module import ConfigParser
 from modules.dithering import Dithering
 from modules.gamma_input import GammaInput
@@ -39,8 +40,8 @@ class Window(QMainWindow):
         self._type = None
         self.current_image = None
         self.scoped_colorspaces = []
-        self.current_colorspace = None
-        self.defined_colorspace = None
+        self.colorspace_num = None
+        self.colorspace = None
 
         self.line_point_1 = None
         self.line_point_2 = None
@@ -88,9 +89,12 @@ class Window(QMainWindow):
         self.update()
 
     def draw_raster_map(self, _type):
-        raster_map = self.raster_map
-        if raster_map is None:
+        if self.raster_map is None:
             return
+        raster_map = self.raster_map
+        if _type == "ppm":
+            raster_map = Colorspace.to_rgb_pixmap(raster_map, self.colorspace)
+
         if self.label.pixmap() is None:
             canvas = QPixmap(self.width, self.height)
             self.label.setPixmap(canvas)
@@ -146,6 +150,17 @@ class Window(QMainWindow):
             return 1 / (1 + abs(self.gamma))
         return 1 + self.gamma / 25
 
+    def view_channel(self):
+        if self._type == "ppm":
+            channel, pressed = QInputDialog.getInt(self, "Channel", "Channel", 1, 1, 3)
+            if pressed:
+                new_raster_map = [[self.raster_map[i][j][channel - 1]
+                                   for j in range(len(self.raster_map[0]))]
+                                  for i in range(len(self.raster_map))]
+                self.raster_map = new_raster_map
+                self._type = "pgm"
+                self.draw_raster_map(self._type)
+
     def pgm_gradient(self):
         self._type = "pgm"
         self.raster_map = Dithering.pgm_gradient(self.height, self.width)
@@ -153,8 +168,10 @@ class Window(QMainWindow):
 
     def ppm_gradient(self):
         self._type = "ppm"
-        self.raster_map = Dithering.ppm_gradient(self.height, self.width)
-        self.draw_raster_map(self._type)
+        channel, pressed = QInputDialog.getInt(self, "Channel", "Channel", 1, 1, 3)
+        if pressed:
+            self.raster_map = Dithering.ppm_gradient(self.height, self.width, channel)
+            self.draw_raster_map(self._type)
 
     def ordered_dithering(self):
         if self._type == "pgm":
@@ -212,72 +229,61 @@ class Window(QMainWindow):
                 self.raster_map = dither.atkinson_ppm()
                 self.draw_raster_map(self._type)
 
-    def switching(self):
-        """
-        формально, нужно тут нужно получать
-        растер мапу для картинки или обновлять
-        текущую
-        Полученная raster_map должна быть в том colorspace,
-        который сейчас выбран (то есть, self.defined_colorspace)
-
-        :return: raster_map или void, если менять raster_map прямо здесь
-        """
-        pass
+    def switching(self, new_colorspace):
+        if self.raster_map is not None and self._type == "ppm":
+            self.raster_map = Colorspace.to_rgb_pixmap(self.raster_map, self.colorspace)
+            self.colorspace = new_colorspace
+            self.raster_map = Colorspace.from_rgb_pixmap(self.raster_map, self.colorspace)
+        else:
+            self.colorspace = new_colorspace
 
     def switch_to_cmy(self):
-        if self.defined_colorspace is not None:
-            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
-        self.current_colorspace = 0
-        self.defined_colorspace = Cmy
-        self.switching()
+        if self.colorspace is not None:
+            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+        self.colorspace_num = 0
+        self.switching(Cmy)
         self.draw_raster_map(self._type)
 
     def switch_to_hsl(self):
-        if self.defined_colorspace is not None:
-            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
-        self.current_colorspace = 1
-        self.defined_colorspace = Hsl
-        self.switching()
+        if self.colorspace is not None:
+            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+        self.colorspace_num = 1
+        self.switching(Hsl)
         self.draw_raster_map(self._type)
 
     def switch_to_hsv(self):
-        if self.defined_colorspace is not None:
-            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
-        self.current_colorspace = 2
-        self.defined_colorspace = Hsv
-        self.switching()
+        if self.colorspace is not None:
+            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+        self.colorspace_num = 2
+        self.switching(Hsv)
         self.draw_raster_map(self._type)
 
     def switch_to_rgb(self):
-        if self.defined_colorspace is not None:
-            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
-        self.current_colorspace = 3
-        self.defined_colorspace = Rgb
-        self.switching()
+        if self.colorspace is not None:
+            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+        self.colorspace_num = 3
+        self.switching(Rgb)
         self.draw_raster_map(self._type)
 
     def switch_to_ycbcr601(self):
-        if self.defined_colorspace is not None:
-            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
-        self.current_colorspace = 4
-        self.defined_colorspace = YCbCr601
-        self.switching()
+        if self.colorspace is not None:
+            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+        self.colorspace_num = 4
+        self.switching(YCbCr601)
         self.draw_raster_map(self._type)
 
     def switch_to_ycbcr709(self):
-        if self.defined_colorspace is not None:
-            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
-        self.current_colorspace = 5
-        self.defined_colorspace = YCbCr709
-        self.switching()
+        if self.colorspace is not None:
+            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+        self.colorspace_num = 5
+        self.switching(YCbCr709)
         self.draw_raster_map(self._type)
 
     def switch_to_ycocg(self):
-        if self.defined_colorspace is not None:
-            self.scoped_colorspaces[self.current_colorspace].setChecked(False)
-        self.current_colorspace = 6
-        self.defined_colorspace = YCoCg
-        self.switching()
+        if self.colorspace is not None:
+            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+        self.colorspace_num = 6
+        self.switching(YCoCg)
         self.draw_raster_map(self._type)
 
     def _createMenuBar(self):
@@ -309,15 +315,24 @@ class Window(QMainWindow):
         gamma_input_action.triggered.connect(self.open_gamma_input)
         edit_menu.addAction(gamma_input_action)
 
-        generate_menu = menu_bar.addMenu('&Generate')
+        view_menu = menu_bar.addMenu('&View')
 
-        generate_pgm = QAction('&PGM', self)
+        channel_view = QAction('&Channel', self)
+        channel_view.triggered.connect(self.view_channel)
+        view_menu.addAction(channel_view)
+
+        generate_pgm = QAction('&PGM gradient', self)
         generate_pgm.triggered.connect(self.pgm_gradient)
-        generate_menu.addAction(generate_pgm)
+        view_menu.addAction(generate_pgm)
 
-        generate_ppm = QAction('&PPM', self)
+        generate_ppm = QAction('&PPM gradient', self)
         generate_ppm.triggered.connect(self.ppm_gradient)
-        generate_menu.addAction(generate_ppm)
+        view_menu.addAction(generate_ppm)
+
+        drawer = menu_bar.addMenu('&Draw')
+        line_drawer = QAction('&Line', self)
+        line_drawer.triggered.connect(self.draw_line)
+        drawer.addAction(line_drawer)
 
         dithering_menu = menu_bar.addMenu('&Dithering')
 
@@ -392,12 +407,9 @@ class Window(QMainWindow):
                 ycbcr709_colorspace,
                 ycocg_colorspace
             ]
-        self.switch_to_rgb()
-
-        drawer = menu_bar.addMenu('&Draw')
-        line_drawer = QAction('&Line', self)
-        line_drawer.triggered.connect(self.draw_line)
-        drawer.addAction(line_drawer)
+        self.colorspace_num = 3
+        self.colorspace = Rgb
+        # self.switch_to_rgb()
 
     def mousePressEvent(self, e):
         x, y = e.x(), e.y()
