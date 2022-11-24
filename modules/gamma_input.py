@@ -7,7 +7,7 @@ class GammaInput:
         self.initUI()
 
     def initUI(self):
-        self.line_input, pressed = QInputDialog.getDouble(self.parent, "Value", "Value", 2, 0.01, 5)
+        self.line_input, pressed = QInputDialog.getDouble(self.parent, "Value", "Value", 2, 0.1, 5)
         if pressed:
             self.editing_finished()
 
