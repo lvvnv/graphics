@@ -108,9 +108,9 @@ class Window(QMainWindow):
                     pen.setColor(QColor(bit, bit, bit))
                 elif _type == "ppm":
                     b, g, r = [row[x][-i] for i in range(3)]
-                    r = round(((r / 255) ** (1 / self.gamma_value())) * 255)
-                    g = round(((g / 255) ** (1 / self.gamma_value())) * 255)
-                    b = round(((b / 255) ** (1 / self.gamma_value())) * 255)
+                    r = round((np.abs(r / 255) ** (1 / self.gamma_value())) * 255)
+                    g = round((np.abs(g / 255) ** (1 / self.gamma_value())) * 255)
+                    b = round((np.abs(b / 255) ** (1 / self.gamma_value())) * 255)
                     pen.setColor(QColor(r, g, b))
                 painter.setPen(pen)
                 painter.drawPoint(x, y)
@@ -290,8 +290,6 @@ class Window(QMainWindow):
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu('&File')
 
-        edit_menu = menu_bar.addMenu('&Edit')
-
         open_file_action = QAction('&Open', self)
         open_file_action.triggered.connect(self.open_file)
         file_menu.addAction(open_file_action)
@@ -307,13 +305,15 @@ class Window(QMainWindow):
         painter = menu_bar.addAction('&Paint')
         painter.triggered.connect(self.open_painter)
 
+        gamma_menu = menu_bar.addMenu('&Gamma')
+
         gamma_action = QAction('&Gamma correction', self)
         gamma_action.triggered.connect(self.open_gamma_slider)
-        edit_menu.addAction(gamma_action)
+        gamma_menu.addAction(gamma_action)
 
         gamma_input_action = QAction('&Gamma correction input', self)
         gamma_input_action.triggered.connect(self.open_gamma_input)
-        edit_menu.addAction(gamma_input_action)
+        gamma_menu.addAction(gamma_input_action)
 
         view_menu = menu_bar.addMenu('&View')
 
