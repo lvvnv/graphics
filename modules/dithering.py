@@ -43,7 +43,7 @@ class Dithering:
                       ]) / 64
 
         def new_value(i, j, value):
-            return self.nearest_color((M[i % 8, j % 8] - 0.5) / (2 ** self.bitrate) + value)
+            return self.nearest_color((M[i % 8, j % 8] - 0.5) * 2 / (2 ** self.bitrate) + value)
 
         return [[255 * new_value(i, j, self.raster_map[i, j]) for j in range(self.width)] for i in range(self.height)]
 
@@ -59,20 +59,20 @@ class Dithering:
                       ]) / 64
 
         def new_value(i, j, value):
-            return self.nearest_color((M[i % 8, j % 8] - 0.5) / (2 ** self.bitrate) + value)
+            return self.nearest_color((M[i % 8, j % 8] - 0.5) * 2 / (2 ** self.bitrate) + value)
 
         return [[[255 * new_value(i, j, self.raster_map[i, j, k]) for k in range(3)]
                  for j in range(self.width)] for i in range(self.height)]
 
     def random_pgm(self):
         def new_value(value):
-            return self.nearest_color((random.random() - 0.5) / (2 ** self.bitrate) + value)
+            return self.nearest_color((random.random() - 0.5) * 2 / (2 ** self.bitrate) + value)
 
         return [[255 * new_value(self.raster_map[i, j]) for j in range(self.width)] for i in range(self.height)]
 
     def random_ppm(self):
         def new_value(value):
-            return self.nearest_color((random.random() - 0.5) / (2 ** self.bitrate) + value)
+            return self.nearest_color((random.random() - 0.5) * 2 / (2 ** self.bitrate) + value)
 
         return [[[255 * new_value(self.raster_map[i, j, k]) for k in range(3)]
                  for j in range(self.width)] for i in range(self.height)]
