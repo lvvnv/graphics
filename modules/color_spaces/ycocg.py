@@ -1,4 +1,3 @@
-from modules.color_spaces.colorspace import Colorspace
 import numpy as np
 
 

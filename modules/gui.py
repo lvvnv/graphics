@@ -11,7 +11,6 @@ from modules.color_spaces.rgb import Rgb
 from modules.color_spaces.ycbcr601 import YCbCr601
 from modules.color_spaces.ycbcr709 import YCbCr709
 from modules.color_spaces.ycocg import YCoCg
-from modules.color_spaces.colorspace import Colorspace
 from modules.config_module import ConfigParser
 from modules.dithering import Dithering
 from modules.gamma_input import GammaInput
@@ -39,9 +38,9 @@ class Window(QMainWindow):
 
         self._type = None
         self.current_image = None
-        self.scoped_colorspaces = []
-        self.colorspace_num = None
-        self.colorspace = None
+        self.colorspace_checkbox = []
+        self.colorspace_num = 3
+        self.colorspace = Rgb
 
         self.line_point_1 = None
         self.line_point_2 = None
@@ -65,8 +64,14 @@ class Window(QMainWindow):
             width, pressed = QInputDialog.getInt(self, "Width", "Width", 4, 1, 10)
             if pressed:
                 line_drawer = LineDrawer(b, g, r, self._type, transparency, width)
-                self.raster_map = line_drawer.draw(self.raster_map, self.line_point_1, self.line_point_2)
+                self.int_to_float(line_drawer.draw(self.float_to_int(), self.line_point_1, self.line_point_2))
                 self.draw_raster_map(self._type)
+
+    def float_to_int(self):
+        return np.round(self.raster_map * 255)
+
+    def int_to_float(self, raster_map):
+        self.raster_map = raster_map / 255
 
     def print_image(self, _type):
         file = open(self.current_image, "rb")
@@ -77,7 +82,7 @@ class Window(QMainWindow):
             im, self.width, self.height = ppm.read_ppm(file)
         canvas = QPixmap(self.width, self.height)
         self.label.setPixmap(canvas)
-        self.raster_map = np.array(im)
+        self.int_to_float(np.array(im))
         self.draw_raster_map(_type)
 
     def close_image(self):
@@ -93,7 +98,7 @@ class Window(QMainWindow):
             return
         raster_map = self.raster_map
         if _type == "ppm":
-            raster_map = Colorspace.to_rgb_pixmap(raster_map, self.colorspace)
+            raster_map = self.colorspace.to_rgb_pixmap(raster_map)
 
         if self.label.pixmap() is None:
             canvas = QPixmap(self.width, self.height)
@@ -104,13 +109,13 @@ class Window(QMainWindow):
             row = raster_map[y]
             for x in range(len(row)):
                 if _type == "pgm":
-                    bit = row[x]
+                    bit = np.round(row[x] * 255)
                     pen.setColor(QColor(bit, bit, bit))
                 elif _type == "ppm":
                     b, g, r = [row[x][-i] for i in range(3)]
-                    r = round((np.abs(r / 255) ** (1 / self.gamma_value())) * 255)
-                    g = round((np.abs(g / 255) ** (1 / self.gamma_value())) * 255)
-                    b = round((np.abs(b / 255) ** (1 / self.gamma_value())) * 255)
+                    r = np.round((np.abs(r) ** (1 / self.gamma_value())) * 255)
+                    g = np.round((np.abs(g) ** (1 / self.gamma_value())) * 255)
+                    b = np.round((np.abs(b) ** (1 / self.gamma_value())) * 255)
                     pen.setColor(QColor(r, g, b))
                 painter.setPen(pen)
                 painter.drawPoint(x, y)
@@ -134,9 +139,9 @@ class Window(QMainWindow):
             return
         filepath = QFileDialog.getSaveFileName(self, 'Save file', './images', '.' + self._type)[0]
         if self._type == "pgm":
-            pgm.create_pgm(self.raster_map, filepath)
+            pgm.create_pgm(self.float_to_int(), filepath)
         elif self._type == "ppm":
-            ppm.create_ppm(self.raster_map, filepath)
+            ppm.create_ppm(self.float_to_int(), filepath)
 
     def open_gamma_slider(self):
         gamma_slider = GammaSlider(parent=self, value=self.gamma)
@@ -231,57 +236,57 @@ class Window(QMainWindow):
 
     def switching(self, new_colorspace):
         if self.raster_map is not None and self._type == "ppm":
-            self.raster_map = Colorspace.to_rgb_pixmap(self.raster_map, self.colorspace)
+            self.raster_map = self.colorspace.to_rgb_pixmap(self.raster_map)
             self.colorspace = new_colorspace
-            self.raster_map = Colorspace.from_rgb_pixmap(self.raster_map, self.colorspace)
+            self.raster_map = self.colorspace.from_rgb_pixmap(self.raster_map)
         else:
             self.colorspace = new_colorspace
 
     def switch_to_cmy(self):
         if self.colorspace is not None:
-            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+            self.colorspace_checkbox[self.colorspace_num].setChecked(False)
         self.colorspace_num = 0
         self.switching(Cmy)
         self.draw_raster_map(self._type)
 
     def switch_to_hsl(self):
         if self.colorspace is not None:
-            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+            self.colorspace_checkbox[self.colorspace_num].setChecked(False)
         self.colorspace_num = 1
         self.switching(Hsl)
         self.draw_raster_map(self._type)
 
     def switch_to_hsv(self):
         if self.colorspace is not None:
-            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+            self.colorspace_checkbox[self.colorspace_num].setChecked(False)
         self.colorspace_num = 2
         self.switching(Hsv)
         self.draw_raster_map(self._type)
 
     def switch_to_rgb(self):
         if self.colorspace is not None:
-            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+            self.colorspace_checkbox[self.colorspace_num].setChecked(False)
         self.colorspace_num = 3
         self.switching(Rgb)
         self.draw_raster_map(self._type)
 
     def switch_to_ycbcr601(self):
         if self.colorspace is not None:
-            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+            self.colorspace_checkbox[self.colorspace_num].setChecked(False)
         self.colorspace_num = 4
         self.switching(YCbCr601)
         self.draw_raster_map(self._type)
 
     def switch_to_ycbcr709(self):
         if self.colorspace is not None:
-            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+            self.colorspace_checkbox[self.colorspace_num].setChecked(False)
         self.colorspace_num = 5
         self.switching(YCbCr709)
         self.draw_raster_map(self._type)
 
     def switch_to_ycocg(self):
         if self.colorspace is not None:
-            self.scoped_colorspaces[self.colorspace_num].setChecked(False)
+            self.colorspace_checkbox[self.colorspace_num].setChecked(False)
         self.colorspace_num = 6
         self.switching(YCoCg)
         self.draw_raster_map(self._type)
@@ -352,52 +357,45 @@ class Window(QMainWindow):
         dithering_atkinson.triggered.connect(self.atkinson_dithering)
         dithering_menu.addAction(dithering_atkinson)
 
-        """
-        Colorspace block
-        
-        Radiobutton
-        Only one can picked at a time
-        call self.defined_colorspace when printing
-        """
-        colorspaces = menu_bar.addMenu('&Colorspaces')
+        colorspace = menu_bar.addMenu('&Colorspace')
 
         cmy_colorspace = QAction('&CMY', self)
         cmy_colorspace.triggered.connect(self.switch_to_cmy)
         cmy_colorspace.setCheckable(True)
-        colorspaces.addAction(cmy_colorspace)
+        colorspace.addAction(cmy_colorspace)
 
         hsl_colorspace = QAction('&HSL', self)
         hsl_colorspace.triggered.connect(self.switch_to_hsl)
         hsl_colorspace.setCheckable(True)
-        colorspaces.addAction(hsl_colorspace)
+        colorspace.addAction(hsl_colorspace)
 
         hsv_colorspace = QAction('&HSV', self)
         hsv_colorspace.triggered.connect(self.switch_to_hsv)
         hsv_colorspace.setCheckable(True)
-        colorspaces.addAction(hsv_colorspace)
+        colorspace.addAction(hsv_colorspace)
 
         rgb_colorspace = QAction('&RGB', self)
         rgb_colorspace.triggered.connect(self.switch_to_rgb)
         rgb_colorspace.setCheckable(True)
         rgb_colorspace.setChecked(True)
-        colorspaces.addAction(rgb_colorspace)
+        colorspace.addAction(rgb_colorspace)
 
         ycbcr601_colorspace = QAction('&YCbCr601', self)
         ycbcr601_colorspace.triggered.connect(self.switch_to_ycbcr601)
         ycbcr601_colorspace.setCheckable(True)
-        colorspaces.addAction(ycbcr601_colorspace)
+        colorspace.addAction(ycbcr601_colorspace)
 
         ycbcr709_colorspace = QAction('&YCbCr709', self)
         ycbcr709_colorspace.triggered.connect(self.switch_to_ycbcr709)
         ycbcr709_colorspace.setCheckable(True)
-        colorspaces.addAction(ycbcr709_colorspace)
+        colorspace.addAction(ycbcr709_colorspace)
 
         ycocg_colorspace = QAction('&YCoCg', self)
         ycocg_colorspace.triggered.connect(self.switch_to_ycocg)
         ycocg_colorspace.setCheckable(True)
-        colorspaces.addAction(ycocg_colorspace)
+        colorspace.addAction(ycocg_colorspace)
 
-        self.scoped_colorspaces += \
+        self.colorspace_checkbox += \
             [
                 cmy_colorspace,
                 hsl_colorspace,
@@ -407,9 +405,6 @@ class Window(QMainWindow):
                 ycbcr709_colorspace,
                 ycocg_colorspace
             ]
-        self.colorspace_num = 3
-        self.colorspace = Rgb
-        # self.switch_to_rgb()
 
     def mousePressEvent(self, e):
         x, y = e.x(), e.y()

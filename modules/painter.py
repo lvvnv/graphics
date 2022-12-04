@@ -81,7 +81,7 @@ class Painter(QtWidgets.QMainWindow):
             row = []
             for x in range(width):
                 color = [c for c in QColor(image_pixmap.pixel(x, y)).getRgb()][:3]
-                row.append(color)
+                row.append([color[2], color[0], color[1]])
             p6_map.append(row)
         create_ppm(p6_map)
 

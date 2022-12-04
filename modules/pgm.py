@@ -1,6 +1,6 @@
 import array
 
-image_paint_path = "../images/paint.pgm"
+image_paint_path = "./images/paint.pgm"
 image_sample_path = "../images/sample_640×426.pgm"
 
 
