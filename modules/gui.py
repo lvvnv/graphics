@@ -1,6 +1,7 @@
 import numpy as np
 from PyQt5.QtGui import QPixmap, QColor, QPainter, QPen
-from PyQt5.QtWidgets import QLabel, QMainWindow, QAction, QFileDialog, QColorDialog, QInputDialog
+from PyQt5.QtWidgets import QLabel, QMainWindow, QAction, QFileDialog, QColorDialog, QInputDialog, QGridLayout, QWidget
+import pyqtgraph as pg
 
 import modules.pgm as pgm
 import modules.ppm as ppm
@@ -15,6 +16,7 @@ from modules.config_module import ConfigParser
 from modules.dithering import Dithering
 from modules.gamma_input import GammaInput
 from modules.gamma_slider import GammaSlider
+from modules.histogram import Histogram
 from modules.line_drawer import LineDrawer
 from modules.painter import Painter
 
@@ -45,6 +47,7 @@ class Window(QMainWindow):
         self.line_point_1 = None
         self.line_point_2 = None
         self.gamma = 0
+        self.histogram = None
 
         self._createMenuBar()
 
@@ -291,6 +294,29 @@ class Window(QMainWindow):
         self.switching(YCoCg)
         self.draw_raster_map(self._type)
 
+    def one_channel_histogram(self):
+        if self._type == "ppm":
+            channel, pressed = QInputDialog.getInt(self, "Channel", "Channel", 1, 1, 3)
+            if pressed:
+                self.histogram = Histogram(self.float_to_int()[:, :, channel - 1].flatten())
+                self.histogram.one_channel(channel)
+        elif self._type == "pgm":
+            self.histogram = Histogram(self.float_to_int().flatten())
+            self.histogram.pgm()
+
+    def three_channels_histogram(self):
+        if self._type == "ppm":
+            self.histogram = Histogram(self.float_to_int())
+            self.histogram.three_channels()
+
+    def correction(self):
+        if self._type is not None:
+            fraction, pressed = QInputDialog.getDouble(self, "Ignore rate", "Ignore rate", 0.2, 0, 0.49, 2)
+            if pressed:
+                min_value, max_value = Histogram.find_borders(self.raster_map, fraction)
+                self.raster_map = Histogram.correction(self.raster_map, min_value, max_value)
+                self.draw_raster_map(self._type)
+
     def _createMenuBar(self):
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu('&File')
@@ -405,6 +431,20 @@ class Window(QMainWindow):
                 ycbcr709_colorspace,
                 ycocg_colorspace
             ]
+
+        histogram_menu = menu_bar.addMenu('&Histogram')
+
+        show_histogram = QAction('&Show one channel', self)
+        show_histogram.triggered.connect(self.one_channel_histogram)
+        histogram_menu.addAction(show_histogram)
+
+        show_histogram = QAction('&Show three channels', self)
+        show_histogram.triggered.connect(self.three_channels_histogram)
+        histogram_menu.addAction(show_histogram)
+
+        contrast_correction = QAction('&Contrast correction', self)
+        contrast_correction.triggered.connect(self.correction)
+        histogram_menu.addAction(contrast_correction)
 
     def mousePressEvent(self, e):
         x, y = e.x(), e.y()
