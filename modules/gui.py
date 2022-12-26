@@ -14,6 +14,7 @@ from modules.color_spaces.ycbcr709 import YCbCr709
 from modules.color_spaces.ycocg import YCoCg
 from modules.config_module import ConfigParser
 from modules.dithering import Dithering
+from modules.filter import Filter
 from modules.gamma_input import GammaInput
 from modules.gamma_slider import GammaSlider
 from modules.histogram import Histogram
@@ -317,6 +318,16 @@ class Window(QMainWindow):
                 self.raster_map = Histogram.correction(self.raster_map, min_value, max_value)
                 self.draw_raster_map(self._type)
 
+    def filter_threshold(self):
+        threshold, pressed = QInputDialog.getInt(self, "Threshold value", "Threshold value", 128, 0, 255)
+        if pressed:
+            self.raster_map = Filter.threshold(self.raster_map, self._type, threshold)
+            self.draw_raster_map(self._type)
+
+    def filter_otsu(self):
+        self.raster_map = Filter.otsu(self.raster_map, self._type)
+        self.draw_raster_map(self._type)
+
     def _createMenuBar(self):
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu('&File')
@@ -445,6 +456,16 @@ class Window(QMainWindow):
         contrast_correction = QAction('&Contrast correction', self)
         contrast_correction.triggered.connect(self.correction)
         histogram_menu.addAction(contrast_correction)
+
+        filter_menu = menu_bar.addMenu('&Filter')
+
+        filter_threshold_action = QAction('&Threshold', self)
+        filter_threshold_action.triggered.connect(self.filter_threshold)
+        filter_menu.addAction(filter_threshold_action)
+
+        filter_otsu_action = QAction('&Otsu', self)
+        filter_otsu_action.triggered.connect(self.filter_otsu)
+        filter_menu.addAction(filter_otsu_action)
 
     def mousePressEvent(self, e):
         x, y = e.x(), e.y()
