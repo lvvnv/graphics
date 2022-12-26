@@ -1,7 +1,6 @@
 import numpy as np
 from PyQt5.QtGui import QPixmap, QColor, QPainter, QPen
-from PyQt5.QtWidgets import QLabel, QMainWindow, QAction, QFileDialog, QColorDialog, QInputDialog, QGridLayout, QWidget
-import pyqtgraph as pg
+from PyQt5.QtWidgets import QLabel, QMainWindow, QAction, QFileDialog, QColorDialog, QInputDialog
 
 import modules.pgm as pgm
 import modules.ppm as ppm
@@ -15,8 +14,6 @@ from modules.color_spaces.ycocg import YCoCg
 from modules.config_module import ConfigParser
 from modules.dithering import Dithering
 from modules.filter import Filter
-from modules.gamma_input import GammaInput
-from modules.gamma_slider import GammaSlider
 from modules.histogram import Histogram
 from modules.line_drawer import LineDrawer
 from modules.painter import Painter
@@ -47,7 +44,7 @@ class Window(QMainWindow):
 
         self.line_point_1 = None
         self.line_point_2 = None
-        self.gamma = 0
+        self.gamma = None
         self.histogram = None
 
         self._createMenuBar()
@@ -77,18 +74,6 @@ class Window(QMainWindow):
     def int_to_float(self, raster_map):
         self.raster_map = raster_map / 255
 
-    def print_image(self, _type):
-        file = open(self.current_image, "rb")
-        im = None
-        if _type == "pgm":
-            im, self.width, self.height = pgm.read_pgm(file)
-        elif _type == "ppm":
-            im, self.width, self.height = ppm.read_ppm(file)
-        canvas = QPixmap(self.width, self.height)
-        self.label.setPixmap(canvas)
-        self.int_to_float(np.array(im))
-        self.draw_raster_map(_type)
-
     def close_image(self):
         self.current_image = None
         self.raster_map = None
@@ -113,13 +98,13 @@ class Window(QMainWindow):
             row = raster_map[y]
             for x in range(len(row)):
                 if _type == "pgm":
-                    bit = np.round(row[x] * 255)
+                    bit = np.round(self.from_gamma(row[x]) * 255)
                     pen.setColor(QColor(bit, bit, bit))
                 elif _type == "ppm":
                     b, g, r = [row[x][-i] for i in range(3)]
-                    r = np.round((np.abs(r) ** (1 / self.gamma_value())) * 255)
-                    g = np.round((np.abs(g) ** (1 / self.gamma_value())) * 255)
-                    b = np.round((np.abs(b) ** (1 / self.gamma_value())) * 255)
+                    r = np.round((self.to_srgb(self.from_gamma(r))) * 255)
+                    g = np.round((self.to_srgb(self.from_gamma(g))) * 255)
+                    b = np.round((self.to_srgb(self.from_gamma(b))) * 255)
                     pen.setColor(QColor(r, g, b))
                 painter.setPen(pen)
                 painter.drawPoint(x, y)
@@ -136,7 +121,17 @@ class Window(QMainWindow):
             return
         self._type = filetype
         self.current_image = filepath
-        self.print_image(filetype)
+        file = open(self.current_image, "rb")
+        im = None
+        if self._type == "pgm":
+            im, self.width, self.height = pgm.read_pgm(file)
+        elif self._type == "ppm":
+            im, self.width, self.height = ppm.read_ppm(file)
+        canvas = QPixmap(self.width, self.height)
+        self.label.setPixmap(canvas)
+        self.int_to_float(np.array(im))
+        self.gamma = 0
+        self.draw_raster_map(self._type)
 
     def save_file(self):
         if self._type is None or self.raster_map is None:
@@ -147,17 +142,59 @@ class Window(QMainWindow):
         elif self._type == "ppm":
             ppm.create_ppm(self.float_to_int(), filepath)
 
-    def open_gamma_slider(self):
-        gamma_slider = GammaSlider(parent=self, value=self.gamma)
-        gamma_slider.show()
+    def from_gamma(self, pixel):
+        if self.gamma != 0:
+            return np.abs(pixel) ** (1 / self.gamma)
+        return self.from_srgb(pixel)
 
-    def open_gamma_input(self):
-        gamma_input = GammaInput(parent=self)
+    def from_srgb(self, pixel):
+        if pixel <= 0.0031308:
+            return pixel * 12.92
 
-    def gamma_value(self):
-        if self.gamma <= 0:
-            return 1 / (1 + abs(self.gamma))
-        return 1 + self.gamma / 25
+        return 1.055 * (pixel ** (1 / 2.4)) - 0.055
+
+    def to_gamma(self, pixel, new_gamma):
+        if new_gamma != 0:
+            return np.abs(pixel) ** new_gamma
+        return self.to_srgb(pixel)
+
+    def to_srgb(self, pixel):
+        if pixel <= 0.04045:
+            return pixel / 12.92
+
+        return ((pixel + 0.055) / 1.055) ** 2.4
+
+    def gamma_assign(self):
+        if self._type is not None:
+            new_gamma, pressed = QInputDialog.getDouble(self, "Value", "Value", self.gamma, 0, 5)
+            if pressed:
+                self.gamma = new_gamma
+                self.draw_raster_map(self._type)
+
+    def gamma_convert(self):
+        if self._type is not None and self.colorspace == Rgb:
+            new_gamma, pressed = QInputDialog.getDouble(self, "Value", "Value", self.gamma, 0, 5)
+            if pressed:
+                self.convert_gamma(new_gamma)
+                self.gamma = new_gamma
+                self.draw_raster_map(self._type)
+
+    def convert_gamma(self, new_gamma):
+        if self._type == "ppm":
+            for i in range(len(self.raster_map)):
+                for j in range(len(self.raster_map[0])):
+                    b, g, r = [self.raster_map[i][j][-k] for k in range(3)]
+                    r = self.from_gamma(r)
+                    r = self.to_gamma(r, new_gamma)
+                    g = self.from_gamma(g)
+                    g = self.to_gamma(g, new_gamma)
+                    b = self.from_gamma(b)
+                    b = self.to_gamma(b, new_gamma)
+                    self.raster_map[i][j] = [b, r, g]
+        elif self._type == "pgm":
+            for i in range(len(self.raster_map)):
+                for j in range(len(self.raster_map[0])):
+                    self.raster_map[i][j] = self.raster_map[i][j] ** (new_gamma / self.gamma)
 
     def view_channel(self):
         if self._type == "ppm":
@@ -173,6 +210,7 @@ class Window(QMainWindow):
     def pgm_gradient(self):
         self._type = "pgm"
         self.raster_map = Dithering.pgm_gradient(self.height, self.width)
+        self.gamma = 1
         self.draw_raster_map(self._type)
 
     def ppm_gradient(self):
@@ -180,6 +218,7 @@ class Window(QMainWindow):
         channel, pressed = QInputDialog.getInt(self, "Channel", "Channel", 1, 1, 3)
         if pressed:
             self.raster_map = Dithering.ppm_gradient(self.height, self.width, channel)
+            self.gamma = 1
             self.draw_raster_map(self._type)
 
     def ordered_dithering(self):
@@ -377,13 +416,13 @@ class Window(QMainWindow):
 
         gamma_menu = menu_bar.addMenu('&Gamma')
 
-        gamma_action = QAction('&Gamma correction', self)
-        gamma_action.triggered.connect(self.open_gamma_slider)
-        gamma_menu.addAction(gamma_action)
+        gamma_assign_action = QAction('&Assign', self)
+        gamma_assign_action.triggered.connect(self.gamma_assign)
+        gamma_menu.addAction(gamma_assign_action)
 
-        gamma_input_action = QAction('&Gamma correction input', self)
-        gamma_input_action.triggered.connect(self.open_gamma_input)
-        gamma_menu.addAction(gamma_input_action)
+        gamma_convert_action = QAction('&Convert', self)
+        gamma_convert_action.triggered.connect(self.gamma_convert)
+        gamma_menu.addAction(gamma_convert_action)
 
         view_menu = menu_bar.addMenu('&View')
 
