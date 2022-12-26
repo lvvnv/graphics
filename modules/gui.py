@@ -1,7 +1,6 @@
 import numpy as np
 from PyQt5.QtGui import QPixmap, QColor, QPainter, QPen
-from PyQt5.QtWidgets import QLabel, QMainWindow, QAction, QFileDialog, QColorDialog, QInputDialog, QGridLayout, QWidget
-import pyqtgraph as pg
+from PyQt5.QtWidgets import QLabel, QMainWindow, QAction, QFileDialog, QColorDialog, QInputDialog
 
 import modules.pgm as pgm
 import modules.ppm as ppm
@@ -328,6 +327,34 @@ class Window(QMainWindow):
         self.raster_map = Filter.otsu(self.raster_map, self._type)
         self.draw_raster_map(self._type)
 
+    def filter_median(self):
+        radius, pressed = QInputDialog.getInt(self, "Radius value", "Radius value", 5, 0, 10)
+        if pressed:
+            self.raster_map = Filter.median(self.raster_map, self._type, radius)
+            self.draw_raster_map(self._type)
+
+    def filter_gaussian(self):
+        sigma, pressed = QInputDialog.getInt(self, "Sigma value", "Sigma value", 2, 1, 5)
+        if pressed:
+            self.raster_map = Filter.gaussian_filter(self.raster_map, self._type, sigma)
+            self.draw_raster_map(self._type)
+
+    def filter_box_blur(self):
+        radius, pressed = QInputDialog.getInt(self, "Radius value", "Radius value", 5, 0, 10)
+        if pressed:
+            self.raster_map = Filter.box_blur_filter(self.raster_map, self._type, radius)
+            self.draw_raster_map(self._type)
+
+    def filter_sobel(self):
+        self.raster_map = Filter.sobel_filter(self.raster_map, self._type)
+        self.draw_raster_map(self._type)
+
+    def filter_cas(self):
+        sharpness, pressed = QInputDialog.getDouble(self, "Sharpness value", "Sharpness value", 0.5, 0, 1)
+        if pressed:
+            self.raster_map = Filter.cas_filter(self.raster_map, self._type, sharpness)
+            self.draw_raster_map(self._type)
+
     def _createMenuBar(self):
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu('&File')
@@ -466,6 +493,26 @@ class Window(QMainWindow):
         filter_otsu_action = QAction('&Otsu', self)
         filter_otsu_action.triggered.connect(self.filter_otsu)
         filter_menu.addAction(filter_otsu_action)
+
+        filter_median_action = QAction('&Median', self)
+        filter_median_action.triggered.connect(self.filter_median)
+        filter_menu.addAction(filter_median_action)
+
+        filter_gaussian_action = QAction('&Gaussian', self)
+        filter_gaussian_action.triggered.connect(self.filter_gaussian)
+        filter_menu.addAction(filter_gaussian_action)
+
+        filter_box_blur_action = QAction('&Box blur', self)
+        filter_box_blur_action.triggered.connect(self.filter_box_blur)
+        filter_menu.addAction(filter_box_blur_action)
+
+        filter_sobel_action = QAction('&Sobel', self)
+        filter_sobel_action.triggered.connect(self.filter_sobel)
+        filter_menu.addAction(filter_sobel_action)
+
+        filter_cas_action = QAction('&CAS', self)
+        filter_cas_action.triggered.connect(self.filter_cas)
+        filter_menu.addAction(filter_cas_action)
 
     def mousePressEvent(self, e):
         x, y = e.x(), e.y()
