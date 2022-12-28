@@ -194,7 +194,8 @@ class Window(QMainWindow):
         elif self._type == "pgm":
             for i in range(len(self.raster_map)):
                 for j in range(len(self.raster_map[0])):
-                    self.raster_map[i][j] = self.raster_map[i][j] ** (new_gamma / self.gamma)
+                    self.raster_map[i][j] = self.from_gamma(self.raster_map[i][j])
+                    self.raster_map[i][j] = self.to_gamma(self.raster_map[i][j], new_gamma)
 
     def view_channel(self):
         if self._type == "ppm":
