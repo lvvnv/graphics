@@ -32,7 +32,7 @@ def generate_BSpline(ctrl_points, lim, B=0, C=0.5):
     return points
 
 
-def get_weighted_average(raster_map, x, y):
+def get_weighted_average(raster_map, x, y, _type):
     x1 = int(math.floor(x))
     y1 = int(math.floor(y))
     x2 = x1 + 1
@@ -55,12 +55,16 @@ def get_weighted_average(raster_map, x, y):
     weight3 = (1 - weight_x) * weight_y
     weight4 = weight_x * weight_y
 
-    color = [
-        c1[0] * weight1 + c2[0] * weight2 + c3[0] * weight3 + c4[0] * weight4,
-        c1[1] * weight1 + c2[1] * weight2 + c3[1] * weight3 + c4[1] * weight4,
-        c1[2] * weight1 + c2[2] * weight2 + c3[2] * weight3 + c4[2] * weight4
-    ]
-    return color
+    if _type == "ppm":
+        color = [
+            c1[0] * weight1 + c2[0] * weight2 + c3[0] * weight3 + c4[0] * weight4,
+            c1[1] * weight1 + c2[1] * weight2 + c3[1] * weight3 + c4[1] * weight4,
+            c1[2] * weight1 + c2[2] * weight2 + c3[2] * weight3 + c4[2] * weight4
+        ]
+        return color
+    else:
+        color = c1 * weight1 + c2 * weight2 + c3 * weight3 + c4 * weight4
+        return color
 
 
 class BCspline:
@@ -93,6 +97,39 @@ class BCspline:
                 x0 = x_points[x][1]
                 y0 = y_points[y][1]
 
-                color = get_weighted_average(raster_map, x0, y0)
+                color = get_weighted_average(raster_map, x0, y0, "ppm")
+                new_raster_map[y][x] = color
+        return new_raster_map
+
+    @classmethod
+    def convert_image_pgm(cls, raster_map, width, height, b, c):
+        if raster_map is None:
+            print("No raster map")
+            return
+        new_raster_map = []
+        for y in range(height):
+            new_raster_map.append([])
+            for x in range(width):
+                new_raster_map[y].append(0)
+        og_width = len(raster_map[0])
+        og_height = len(raster_map)
+
+        x_ctrl_points = []
+        y_ctrl_points = []
+
+        for y in range(og_height):
+            for x in range(og_width):
+                x_ctrl_points.append([x, raster_map[y][x]])
+                y_ctrl_points.append([y, raster_map[y][x]])
+
+        x_points = generate_BSpline(x_ctrl_points, width, b, c)
+        y_points = generate_BSpline(y_ctrl_points, height, b, c)
+
+        for y in range(height):
+            for x in range(width):
+                x0 = x_points[x][1]
+                y0 = y_points[y][1]
+
+                color = get_weighted_average(raster_map, x0, y0, "pgm")
                 new_raster_map[y][x] = color
         return new_raster_map
