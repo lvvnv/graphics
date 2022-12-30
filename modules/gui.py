@@ -20,6 +20,8 @@ from modules.line_drawer import LineDrawer
 from modules.painter import Painter
 from modules.resize.nn import NearestNeighbours
 from modules.resize.bilinear import BilinearResizing
+from modules.resize.lanczos3 import Lanczos3
+from modules.resize.bcspline import BCspline
 
 
 class Window(QMainWindow):
@@ -430,6 +432,34 @@ class Window(QMainWindow):
         self.draw_raster_map(self._type)
         return
 
+    def resize_image_l3(self):
+        width, height = self.get_resolution()
+        if self._type == "pgm":
+            self.raster_map = Lanczos3.convert_image_pgm(self.raster_map, width, height)
+        elif self._type == "ppm":
+            self.raster_map = Lanczos3.convert_image_ppm(self.raster_map, width, height)
+        self.width = width
+        self.height = height
+        self.label.clear()
+        self.initUI()
+        self.update()
+        self.draw_raster_map(self._type)
+        return
+
+    def resize_image_bc(self):
+        width, height = self.get_resolution()
+        if self._type == "pgm":
+            self.raster_map = BCspline.convert_image_pgm(self.raster_map, width, height)
+        elif self._type == "ppm":
+            self.raster_map = BCspline.convert_image_ppm(self.raster_map, width, height)
+        self.width = width
+        self.height = height
+        self.label.clear()
+        self.initUI()
+        self.update()
+        self.draw_raster_map(self._type)
+        return
+
     def _createMenuBar(self):
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu('&File')
@@ -482,6 +512,14 @@ class Window(QMainWindow):
         resize_image_bl = QAction('&Bilinear', self)
         resize_image_bl.triggered.connect(self.resize_image_bl)
         resize_menu.addAction(resize_image_bl)
+
+        resize_image_l3 = QAction('&Lanczos3', self)
+        resize_image_l3.triggered.connect(self.resize_image_l3)
+        resize_menu.addAction(resize_image_l3)
+
+        resize_image_bc = QAction('&BC-spline', self)
+        resize_image_bc.triggered.connect(self.resize_image_bc)
+        resize_menu.addAction(resize_image_bc)
 
         drawer = menu_bar.addMenu('&Draw')
         line_drawer = QAction('&Line', self)
