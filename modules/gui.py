@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QLabel, QMainWindow, QAction, QFileDialog, QColorDia
 
 import modules.pgm as pgm
 import modules.ppm as ppm
+from modules import png
 from modules.color_spaces.cmy import Cmy
 from modules.color_spaces.hsl import Hsl
 from modules.color_spaces.hsv import Hsv
@@ -110,7 +111,7 @@ class Window(QMainWindow):
                 painter.drawPoint(x, y)
         painter.end()
         self.resize(self.width, self.height)
-        self.setFixedSize(self.layout().sizeHint())
+        # self.setFixedSize(self.layout().sizeHint())
         self.update()
 
     def open_file(self):
@@ -125,22 +126,35 @@ class Window(QMainWindow):
         im = None
         if self._type == "pgm":
             im, self.width, self.height = pgm.read_pgm(file)
+            self.gamma = 0
         elif self._type == "ppm":
             im, self.width, self.height = ppm.read_ppm(file)
+            self.gamma = 0
+        elif self._type == "png":
+            im, self.width, self.height, self.gamma = png.read_png(file)
+            self._type = "ppm" if len(im.shape) == 3 else "pgm"
         canvas = QPixmap(self.width, self.height)
         self.label.setPixmap(canvas)
         self.int_to_float(np.array(im))
-        self.gamma = 0
         self.draw_raster_map(self._type)
 
     def save_file(self):
         if self._type is None or self.raster_map is None:
             return
         filepath = QFileDialog.getSaveFileName(self, 'Save file', './images', '.' + self._type)[0]
+        if filepath == '':
+            return
         if self._type == "pgm":
-            pgm.create_pgm(self.float_to_int(), filepath)
+            pgm.create_pgm(self.float_to_int(), filepath + '.pgm')
         elif self._type == "ppm":
-            ppm.create_ppm(self.float_to_int(), filepath)
+            ppm.create_ppm(self.float_to_int(), filepath + '.ppm')
+
+    def save_png(self):
+        if self._type is None or self.raster_map is None:
+            return
+        filepath = QFileDialog.getSaveFileName(self, 'Save file', './images', '.png')[0]
+        png.create_png(self.float_to_int(), self.gamma, filepath + '.png')
+
 
     def from_gamma(self, pixel):
         if self.gamma != 0:
@@ -407,6 +421,10 @@ class Window(QMainWindow):
         save_file_action = QAction('&Save', self)
         save_file_action.triggered.connect(self.save_file)
         file_menu.addAction(save_file_action)
+
+        save_png_action = QAction('&Save as PNG', self)
+        save_png_action.triggered.connect(self.save_png)
+        file_menu.addAction(save_png_action)
 
         close_file_action = QAction('&Close', self)
         close_file_action.triggered.connect(self.close_image)
