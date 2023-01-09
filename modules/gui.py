@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QLabel, QMainWindow, QAction, QFileDialog, QColorDia
 
 import modules.pgm as pgm
 import modules.ppm as ppm
-from modules import png
+from modules import png, jpeg
 from modules.color_spaces.cmy import Cmy
 from modules.color_spaces.hsl import Hsl
 from modules.color_spaces.hsv import Hsv
@@ -133,6 +133,9 @@ class Window(QMainWindow):
         elif self._type == "png":
             im, self.width, self.height, self.gamma = png.read_png(file)
             self._type = "ppm" if len(im.shape) == 3 else "pgm"
+        elif self._type == "jpg" or self._type == "jpeg":
+            jpeg.read_jpeg(file)
+            return
         canvas = QPixmap(self.width, self.height)
         self.label.setPixmap(canvas)
         self.int_to_float(np.array(im))
