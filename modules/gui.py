@@ -404,6 +404,13 @@ class Window(QMainWindow):
     def get_resolution(self):
         return [int(x) for x in QInputDialog.getText(self, 'Resolution', 'WIDTHxHEIGHT')[0].split('x')]
 
+    def get_resolution_bc(self):
+        tmp = [float(x) for x in QInputDialog.getText(self, 'Resolution', 'WIDTHxHEIGHTxBxC')[0].split('x')]
+        tmp[0] = int(tmp[0])
+        tmp[1] = int(tmp[1])
+        return tmp
+
+
     def resize_image_nn(self):
         width, height = self.get_resolution()
         if self._type == "pgm":
@@ -447,11 +454,11 @@ class Window(QMainWindow):
         return
 
     def resize_image_bc(self):
-        width, height = self.get_resolution()
+        width, height, b, c = self.get_resolution_bc()
         if self._type == "pgm":
             self.raster_map = BCspline.convert_image_pgm(self.raster_map, width, height)
         elif self._type == "ppm":
-            self.raster_map = BCspline.convert_image_ppm(self.raster_map, width, height)
+            self.raster_map = BCspline.convert_image_ppm(self.raster_map, width, height, b, c)
         self.width = width
         self.height = height
         self.label.clear()
