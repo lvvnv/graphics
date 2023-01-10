@@ -50,13 +50,29 @@ def read_jpeg(file):
             table_value = int.from_bytes(f[dht_pos + i:dht_pos + i + 1], "big")
             table_values.append(table_value)
         print(dht_length, huffman_table_index, entries_sum)
-        print(entries)
-        print(table_values)
+        print(f"bits {entries}")
+        print(f"haffval {table_values}")
 
-        valptr = [None for _ in range(16)]
-        maxcode = [None for _ in range(16)]
-        mincode = [None for _ in range(16)]
-        j = -1
+        iter = 0
+        c = 0
+        i = 0
+        huffman_codes = []
+        while iter < 16:
+            iter += 1
+            if entries[iter - 1] == 0:
+                i += 1
+                continue
+            c = (2 ** i) * (c + 1)
+            i = 0
+            for x in range(entries[iter - 1]):
+                huffman_codes.append(c)
+                c += 1
+        print(f"huffman_codes {huffman_codes}")
+
+        valptr = [None for _ in range(17)]
+        maxcode = [-1 for _ in range(17)]
+        mincode = [None for _ in range(17)]
+        j = 0
         k = -1
         while True:
             k = k + 1
@@ -65,12 +81,13 @@ def read_jpeg(file):
             if entries[k] == 0:
                 maxcode[k] = -1
                 continue
-            j = j + 1
             valptr[k] = j
-            mincode[k] = table_values[j]
+            mincode[k] = huffman_codes[j]
             j = j + entries[k] - 1
-            maxcode[k] = table_values[j]
-        huffman_tables[huffman_table_index] = {"valptr": valptr, "maxcode": maxcode, "mincode": mincode}
+            maxcode[k] = huffman_codes[j]
+            j = j + 1
+
+        huffman_tables[huffman_table_index] = {"valptr": valptr, "maxcode": maxcode, "mincode": mincode, "table_values": table_values, "huffman_codes": huffman_codes}
         dht_pos = f.find(b'\xff\xc4', dht_pos + 1)
     print(huffman_tables)
 
@@ -103,6 +120,30 @@ def read_jpeg(file):
         print(sos_length, components_number, components)
         print(data)
 
+        print(len(data))
+        print(width * height)
 
+        for component in components:
+            decoded_data = []
+            component_n = component[0]
+            table_n = component[1]
+            huffman_table = huffman_tables[table_n]
 
+            index = 0
+            while index < len(data):
+                k = 0
+                c = 0
+                while c > huffman_table["maxcode"][k]:
+                    base = int(index // 8)
+                    shift = int(index % 8)
+                    bit = (data[base] >> shift) & 0x1
+                    index += 1
+                    c = 2 * c + bit
+                    k = k + 1
+                else:
+                    index += 1
+                res = huffman_table["valptr"][k] + c - huffman_table["mincode"][k]
+                val = huffman_table["table_values"][res]
+                decoded_data.append(val)
+            print(f"decoded_data: {decoded_data}, len: {len(decoded_data)}")
         sos_pos = f.find(b'\xff\xda', sos_pos + 1)
