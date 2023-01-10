@@ -456,7 +456,7 @@ class Window(QMainWindow):
     def resize_image_bc(self):
         width, height, b, c = self.get_resolution_bc()
         if self._type == "pgm":
-            self.raster_map = BCspline.convert_image_pgm(self.raster_map, width, height)
+            self.raster_map = BCspline.convert_image_pgm(self.raster_map, width, height, b, c)
         elif self._type == "ppm":
             self.raster_map = BCspline.convert_image_ppm(self.raster_map, width, height, b, c)
         self.width = width
