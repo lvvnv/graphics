@@ -6,19 +6,32 @@ from typing import Tuple
 import numpy as np
 from scipy.interpolate import griddata
 
-SOI = bytes.fromhex("FFD8")
-SOF0 = bytes.fromhex("FFC0")
-SOF2 = bytes.fromhex("FFC2")
-DHT = bytes.fromhex("FFC4")
-DQT = bytes.fromhex("FFDB")
-DRI = bytes.fromhex("FFDD")
-SOS = bytes.fromhex("FFDA")
-DNL = bytes.fromhex("FFDC")
-EOI = bytes.fromhex("FFD9")
+from modules.color_spaces.ycbcr601 import YCbCr601
+
+SOI = b'\xFF\xD8'
+SOF0 = b'\xFF\xC0'
+SOF2 = b'\xFF\xC2'
+DHT = b'\xFF\xC4'
+DQT = b'\xFF\xDB'
+DRI = b'\xFF\xDD'
+SOS = b'\xFF\xDA'
+DNL = b'\xFF\xDC'
+EOI = b'\xFF\xD9'
 RST = tuple(bytes.fromhex(hex(marker)[2:]) for marker in range(0xFFD0, 0xFFD8))
 
-ColorComponent = namedtuple("ColorComponent", "name order vertical_sampling horizontal_sampling quantization_table_id repeat shape")
-HuffmanTable = namedtuple("HuffmanTable", "dc ac")
+inverted_zigzag = (
+    (0, 0), (1, 0), (0, 1), (0, 2), (1, 1), (2, 0), (3, 0), (2, 1),
+    (1, 2), (0, 3), (0, 4), (1, 3), (2, 2), (3, 1), (4, 0), (5, 0),
+    (4, 1), (3, 2), (2, 3), (1, 4), (0, 5), (0, 6), (1, 5), (2, 4),
+    (3, 3), (4, 2), (5, 1), (6, 0), (7, 0), (6, 1), (5, 2), (4, 3),
+    (3, 4), (2, 5), (1, 6), (0, 7), (1, 7), (2, 6), (3, 5), (4, 4),
+    (5, 3), (6, 2), (7, 1), (7, 2), (6, 3), (5, 4), (4, 5), (3, 6),
+    (2, 7), (3, 7), (4, 6), (5, 5), (6, 4), (7, 3), (7, 4), (6, 5),
+    (5, 6), (4, 7), (5, 7), (6, 6), (7, 5), (7, 6), (6, 7), (7, 7)
+)
+
+color_component = namedtuple("color_component", "name order vertical_sampling horizontal_sampling quantization_table_id repeat shape")
+huffman_table = namedtuple("huffman_table", "dc ac")
 
 
 class JpegDecoder:
@@ -49,6 +62,7 @@ class JpegDecoder:
         self.quantization_tables = {}
         self.restart_interval = 0
         self.image_array = None
+        self.result_image = None
         self.scan_count = 0
 
         while not self.scan_finished:
@@ -98,9 +112,9 @@ class JpegDecoder:
         data_header += 1
 
         if components_amount == 3:
-            print("Color space: YCbCr")
+            print("Colorspace: YCbCr")
         else:
-            print("Color space: greyscale")
+            print("Colorspace: greyscale")
 
         components = ("Y", "Cb", "Cr")
 
@@ -114,7 +128,7 @@ class JpegDecoder:
             my_quantization_table = data[data_header]
             data_header += 1
 
-            my_component = ColorComponent(
+            my_component = color_component(
                 name=component,
                 order=count - 1,
                 horizontal_sampling=horizontal_sample,
@@ -133,8 +147,8 @@ class JpegDecoder:
         sample_height = max(component.shape[1] for component in self.color_components.values())
         self.sample_shape = (sample_width, sample_height)
 
-        print(f"Sampling horizontally: {'x'.join(str(component.horizontal_sampling) for component in self.color_components.values())}")
-        print(f"Sampling vertically: {'x'.join(str(component.vertical_sampling) for component in self.color_components.values())}")
+        print(f"Sampling horizontally: {':'.join(str(component.horizontal_sampling) for component in self.color_components.values())}")
+        print(f"Sampling vertically: {':'.join(str(component.vertical_sampling) for component in self.color_components.values())}")
 
         self.file_header += data_size
 
@@ -210,7 +224,7 @@ class JpegDecoder:
             data_header += 1
             dc_table = tables >> 4
             ac_table = (tables & 0x0F) | 0x10
-            my_huffman_tables.update({component_id: HuffmanTable(dc=dc_table, ac=ac_table)})
+            my_huffman_tables.update({component_id: huffman_table(dc=dc_table, ac=ac_table)})
             my_color_components.update({component_id: self.color_components[component_id]})
 
         if self.scan_mode == "progressive_dct":
@@ -307,7 +321,7 @@ class JpegDecoder:
         return get_bits
 
     def baseline_dct_scan(self, huffman_tables_id: dict, my_color_components: dict) -> None:
-        print(f"\nScanning count: {self.scan_count + 1}/{self.scan_amount}")
+        print(f"Scanning count: {self.scan_count + 1}/{self.scan_amount}")
 
         next_bits = self.bits_generator()
 
@@ -498,7 +512,7 @@ class JpegDecoder:
                         zero_run = 0
                     else:
                         while zero_run > 0:
-                            xr, yr = zagzig[index]
+                            xr, yr = inverted_zigzag[index]
                             current_value = self.image_array[x + xr, y + yr, component.order]
                             if current_value == 0:
                                 zero_run -= 1
@@ -509,12 +523,12 @@ class JpegDecoder:
                     if ac_bits_length > 0:
                         ac_bits = next_bits(ac_bits_length)
                         ac_value = bin_twos_complement(ac_bits)
-                        ac_x, ac_y = zagzig[index]
+                        ac_x, ac_y = inverted_zigzag[index]
                         if refining:
                             while self.image_array[x + ac_x, y + ac_y, component.order] != 0:
                                 to_refine.append((x + ac_x, y + ac_y))
                                 index += 1
-                                ac_x, ac_y = zagzig[index]
+                                ac_x, ac_y = inverted_zigzag[index]
 
                         self.image_array[x + ac_x, y + ac_y, component.order] = ac_value << bit_position_low
                         index += 1
@@ -533,7 +547,7 @@ class JpegDecoder:
 
                 else:
                     while eob_run > 0:
-                        xr, yr = zagzig[index]
+                        xr, yr = inverted_zigzag[index]
                         current_value = self.image_array[x + xr, y + yr, component.order]
 
                         if current_value != 0:
@@ -587,8 +601,9 @@ class JpegDecoder:
     def end_of_image(self, data):
         self.image_array = self.image_array[0: self.image_width, 0: self.image_height, :]
 
-        result_image = YCbCr_to_RGB(self.image_array)
-        result_image = [[[c[2], c[0], c[1]] for c in row] for row in np.swapaxes(result_image, 0, 1)]
+        rotated = np.swapaxes(self.image_array, 0, 1)
+        divided = rotated / 255.0
+        result_image = [[[int(c[0] * 255.0), min(255, int(c[1] * 255.0)), int(c[2] * 255.0)] for c in row] for row in YCbCr601.to_rgb_pixmap(divided)]
 
         if self.array_depth == 1:
             np.clip(self.image_array, a_min=0, a_max=255, out=self.image_array)
@@ -599,13 +614,13 @@ class JpegDecoder:
         self.result_image = result_image
 
 
-class InverseDCT():
+class InverseDCT:
     idct_table = np.zeros(shape=(8, 8, 8, 8), dtype="float64")
     xyuv_coordinates = tuple(product(range(8), repeat=4))
     xy_coordinates = tuple(product(range(8), repeat=2))
     for x, y, u, v in xyuv_coordinates:
-        Cu = 2 ** (-0.5) if u == 0 else 1.0  # Horizontal
-        Cv = 2 ** (-0.5) if v == 0 else 1.0  # Vertical
+        Cu = 2 ** (-0.5) if u == 0 else 1.0
+        Cv = 2 ** (-0.5) if v == 0 else 1.0
         idct_table[x, y, u, v] = 0.25 * Cu * Cv * cos((2 * x + 1) * pi * u / 16) * cos((2 * y + 1) * pi * v / 16)
 
     def __call__(self, block: np.ndarray) -> np.ndarray:
@@ -662,7 +677,7 @@ def bin_twos_complement(bits: str) -> int:
         raise ValueError(f"'{bits}' is not a binary number.")
 
 
-def undo_zigzag(block: np.ndarray) -> np.ndarray:
+def undo_zigzag(block):
     return np.array(
         [[block[0], block[1], block[5], block[6], block[14], block[15], block[27], block[28]],
          [block[2], block[4], block[7], block[13], block[16], block[26], block[29], block[42]],
@@ -674,30 +689,3 @@ def undo_zigzag(block: np.ndarray) -> np.ndarray:
          [block[35], block[36], block[48], block[49], block[57], block[58], block[62], block[63]]],
         dtype=block.dtype
     ).T
-
-
-zagzig = (
-    (0, 0), (1, 0), (0, 1), (0, 2), (1, 1), (2, 0), (3, 0), (2, 1),
-    (1, 2), (0, 3), (0, 4), (1, 3), (2, 2), (3, 1), (4, 0), (5, 0),
-    (4, 1), (3, 2), (2, 3), (1, 4), (0, 5), (0, 6), (1, 5), (2, 4),
-    (3, 3), (4, 2), (5, 1), (6, 0), (7, 0), (6, 1), (5, 2), (4, 3),
-    (3, 4), (2, 5), (1, 6), (0, 7), (1, 7), (2, 6), (3, 5), (4, 4),
-    (5, 3), (6, 2), (7, 1), (7, 2), (6, 3), (5, 4), (4, 5), (3, 6),
-    (2, 7), (3, 7), (4, 6), (5, 5), (6, 4), (7, 3), (7, 4), (6, 5),
-    (5, 6), (4, 7), (5, 7), (6, 6), (7, 5), (7, 6), (6, 7), (7, 7)
-)
-
-
-def YCbCr_to_RGB(image_array):
-    Y = image_array[..., 0].astype("float64")
-    Cb = image_array[..., 1].astype("float64")
-    Cr = image_array[..., 2].astype("float64")
-
-    R = Y + 1.402 * (Cr - 128.0)
-    G = Y - 0.34414 * (Cb - 128.0) - 0.71414 * (Cr - 128.0)
-    B = Y + 1.772 * (Cb - 128.0)
-
-    output = np.stack((R, G, B), axis=-1)
-    np.clip(output, a_min=0.0, a_max=255.0, out=output)
-
-    return np.round(output).astype("uint8")
