@@ -1,6 +1,7 @@
 import numpy as np
 from PyQt5.QtGui import QPixmap, QColor, QPainter, QPen
 from PyQt5.QtWidgets import QLabel, QMainWindow, QAction, QFileDialog, QColorDialog, QInputDialog
+import math
 
 import modules.pgm as pgm
 import modules.ppm as ppm
@@ -18,6 +19,10 @@ from modules.filter import Filter
 from modules.histogram import Histogram
 from modules.line_drawer import LineDrawer
 from modules.painter import Painter
+from modules.resize.nn import NearestNeighbours
+from modules.resize.bilinear import BilinearResizing
+from modules.resize.lanczos3 import Lanczos3
+from modules.resize.bcspline import BCspline
 
 
 class Window(QMainWindow):
@@ -70,7 +75,7 @@ class Window(QMainWindow):
                 self.draw_raster_map(self._type)
 
     def float_to_int(self):
-        return np.round(self.raster_map * 255)
+        return round(self.raster_map * 255)
 
     def int_to_float(self, raster_map):
         self.raster_map = raster_map / 255
@@ -99,13 +104,13 @@ class Window(QMainWindow):
             row = raster_map[y]
             for x in range(len(row)):
                 if _type == "pgm":
-                    bit = np.round(self.from_gamma(row[x]) * 255)
+                    bit = round(self.from_gamma(row[x]) * 255)
                     pen.setColor(QColor(bit, bit, bit))
                 elif _type == "ppm":
                     b, g, r = [row[x][-i] for i in range(3)]
-                    r = np.round((self.to_srgb(self.from_gamma(r))) * 255)
-                    g = np.round((self.to_srgb(self.from_gamma(g))) * 255)
-                    b = np.round((self.to_srgb(self.from_gamma(b))) * 255)
+                    r = round((self.to_srgb(self.from_gamma(r))) * 255)
+                    g = round((self.to_srgb(self.from_gamma(g))) * 255)
+                    b = round((self.to_srgb(self.from_gamma(b))) * 255)
                     pen.setColor(QColor(r, g, b))
                 painter.setPen(pen)
                 painter.drawPoint(x, y)
@@ -410,6 +415,72 @@ class Window(QMainWindow):
             self.raster_map = Filter.cas_filter(self.raster_map, self._type, sharpness)
             self.draw_raster_map(self._type)
 
+    def get_resolution(self):
+        return [int(x) for x in QInputDialog.getText(self, 'Resolution', 'WIDTHxHEIGHT')[0].split('x')]
+
+    def get_resolution_bc(self):
+        tmp = [float(x) for x in QInputDialog.getText(self, 'Resolution', 'WIDTHxHEIGHTxBxC')[0].split('x')]
+        tmp[0] = int(tmp[0])
+        tmp[1] = int(tmp[1])
+        return tmp
+
+
+    def resize_image_nn(self):
+        width, height = self.get_resolution()
+        if self._type == "pgm":
+            self.raster_map = NearestNeighbours.convert_image_pgm(self.raster_map, width, height)
+        elif self._type == "ppm":
+            self.raster_map = NearestNeighbours.convert_image_ppm(self.raster_map, width, height)
+        self.width = width
+        self.height = height
+        self.label.clear()
+        self.initUI()
+        self.update()
+        self.draw_raster_map(self._type)
+        return
+
+    def resize_image_bl(self):
+        width, height = self.get_resolution()
+        if self._type == "pgm":
+            self.raster_map = BilinearResizing.convert_image_pgm(self.raster_map, width, height)
+        elif self._type == "ppm":
+            self.raster_map = BilinearResizing.convert_image_ppm(self.raster_map, width, height)
+        self.width = width
+        self.height = height
+        self.label.clear()
+        self.initUI()
+        self.update()
+        self.draw_raster_map(self._type)
+        return
+
+    def resize_image_l3(self):
+        width, height = self.get_resolution()
+        if self._type == "pgm":
+            self.raster_map = Lanczos3.convert_image_pgm(self.raster_map, width, height)
+        elif self._type == "ppm":
+            self.raster_map = Lanczos3.convert_image_ppm(self.raster_map, width, height)
+        self.width = width
+        self.height = height
+        self.label.clear()
+        self.initUI()
+        self.update()
+        self.draw_raster_map(self._type)
+        return
+
+    def resize_image_bc(self):
+        width, height, b, c = self.get_resolution_bc()
+        if self._type == "pgm":
+            self.raster_map = BCspline.convert_image_pgm(self.raster_map, width, height, b, c)
+        elif self._type == "ppm":
+            self.raster_map = BCspline.convert_image_ppm(self.raster_map, width, height, b, c)
+        self.width = width
+        self.height = height
+        self.label.clear()
+        self.initUI()
+        self.update()
+        self.draw_raster_map(self._type)
+        return
+
     def _createMenuBar(self):
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu('&File')
@@ -456,6 +527,24 @@ class Window(QMainWindow):
         generate_ppm = QAction('&PPM gradient', self)
         generate_ppm.triggered.connect(self.ppm_gradient)
         view_menu.addAction(generate_ppm)
+
+        resize_menu = menu_bar.addMenu('&Resize')
+
+        resize_image_nn = QAction('&Nearest Neighbour', self)
+        resize_image_nn.triggered.connect(self.resize_image_nn)
+        resize_menu.addAction(resize_image_nn)
+
+        resize_image_bl = QAction('&Bilinear', self)
+        resize_image_bl.triggered.connect(self.resize_image_bl)
+        resize_menu.addAction(resize_image_bl)
+
+        resize_image_l3 = QAction('&Lanczos3', self)
+        resize_image_l3.triggered.connect(self.resize_image_l3)
+        resize_menu.addAction(resize_image_l3)
+
+        resize_image_bc = QAction('&BC-spline', self)
+        resize_image_bc.triggered.connect(self.resize_image_bc)
+        resize_menu.addAction(resize_image_bc)
 
         drawer = menu_bar.addMenu('&Draw')
         line_drawer = QAction('&Line', self)
