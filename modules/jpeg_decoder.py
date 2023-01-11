@@ -36,7 +36,7 @@ huffman_table = namedtuple("huffman_table", "dc ac")
 
 class JpegDecoder:
 
-    def __init__(self, image) -> None:
+    def __init__(self, image):
 
         self.raw_file = image.read()
         self.file_size = len(self.raw_file)
@@ -87,7 +87,7 @@ class JpegDecoder:
             else:
                 self.file_header += 1
 
-    def start_of_frame(self, data: bytes) -> None:
+    def start_of_frame(self, data):
         data_size = len(data)
         data_header = 0
         mode = self.raw_file[self.file_header - 4: self.file_header - 2]
@@ -152,7 +152,7 @@ class JpegDecoder:
 
         self.file_header += data_size
 
-    def define_huffman_table(self, data: bytes) -> None:
+    def define_huffman_table(self, data):
         data_size = len(data)
         data_header = 0
 
@@ -190,7 +190,7 @@ class JpegDecoder:
 
         self.file_header += data_size
 
-    def define_quantization_table(self, data: bytes) -> None:
+    def define_quantization_table(self, data):
         data_size = len(data)
         data_header = 0
         while (data_header < data_size):
@@ -205,11 +205,11 @@ class JpegDecoder:
             print(f"Quantization table: {table_destination}")
         self.file_header += data_size
 
-    def define_restart_interval(self, data: bytes) -> None:
+    def define_restart_interval(self, data):
         self.restart_interval = bytes_to_uint(data[:2])
         self.file_header += 2
 
-    def start_of_scan(self, data: bytes) -> None:
+    def start_of_scan(self, data):
         data_size = len(data)
         data_header = 0
         components_amount = data[data_header]
@@ -320,7 +320,7 @@ class JpegDecoder:
         # Return the nested function
         return get_bits
 
-    def baseline_dct_scan(self, huffman_tables_id: dict, my_color_components: dict) -> None:
+    def baseline_dct_scan(self, huffman_tables_id, my_color_components):
         print(f"Scanning count: {self.scan_count + 1}/{self.scan_amount}")
 
         next_bits = self.bits_generator()
@@ -340,7 +340,7 @@ class JpegDecoder:
         components_amount = len(my_color_components)
         current_mcu = 0
         previous_dc = np.zeros(components_amount, dtype="int16")
-        while (current_mcu < self.mcu_count):
+        while current_mcu < self.mcu_count:
             mcu_y, mcu_x = divmod(current_mcu, self.mcu_count_h)
 
             for depth, (component_id, component) in enumerate(my_color_components.items()):
@@ -402,12 +402,12 @@ class JpegDecoder:
         self.scan_count += 1
 
     def progressive_dct_scan(self,
-                             huffman_tables_id: dict,
-                             my_color_components: dict,
-                             spectral_selection_start: int,
-                             spectral_selection_end: int,
-                             bit_position_high: int,
-                             bit_position_low: int) -> None:
+                             huffman_tables_id,
+                             my_color_components,
+                             spectral_selection_start,
+                             spectral_selection_end,
+                             bit_position_high,
+                             bit_position_low):
 
         if (spectral_selection_start == 0) and (spectral_selection_end == 0):
             values = "dc"
@@ -630,7 +630,7 @@ class InverseDCT:
         return np.round(output).astype(block.dtype) + 128
 
 
-class ResizeGrid():
+class ResizeGrid:
     mesh_cache = {}
     indices_cache = {}
 
